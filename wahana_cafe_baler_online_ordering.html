@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wahana Cafe Baler | Official Online Ordering</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,800;1,600&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0e1a12',
+                            card: '#16281c',
+                            surface: '#1d3425',
+                            gold: '#dfb15b',
+                            goldHover: '#c89a43',
+                            light: '#f3efe6',
+                            muted: '#9ca3af'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0e1a12;
+            color: #f3efe6;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0e1a12;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1d3425;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #dfb15b;
+        }
+
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #fceabb 0%, #dfb15b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gold-border-glow {
+            box-shadow: 0 0 15px rgba(223, 177, 91, 0.2);
+        }
+
+        @keyframes pulseSlow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(0.98); }
+        }
+        .animate-pulse-slow {
+            animation: pulseSlow 2.5s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-brand-dark text-brand-light min-h-screen flex flex-col justify-between pb-24 md:pb-0">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="bg-brand-card/90 backdrop-blur-md sticky top-0 z-40 border-b border-brand-surface/60 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                
+                <!-- Logo & Business Name -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                    <div class="w-12 h-12 rounded-full bg-brand-surface border-2 border-brand-gold flex items-center justify-center p-1 shadow-md overflow-hidden flex-shrink-0">
+                        <div class="w-full h-full rounded-full bg-[#1b3022] flex flex-col items-center justify-center text-center p-0.5 border border-brand-gold/40">
+                            <span class="text-[9px] font-black tracking-widest text-brand-gold uppercase leading-none">Wahana</span>
+                            <span class="text-[7px] text-white/80 uppercase tracking-tighter">CAFE</span>
+                            <span class="text-[5px] text-brand-gold/80 italic">Baler 2023</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold font-serif tracking-wide gold-gradient-text leading-tight">WAHANA CAFE</h1>
+                        <p class="text-xs text-brand-muted flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-brand-gold text-[10px]"></i>
+                            <span>Dela Torre Ext., Baler, Aurora</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Header Actions & Supabase Settings -->
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSettingsModal()" class="text-xs text-brand-muted hover:text-brand-gold bg-brand-surface/80 px-3 py-2 rounded-lg border border-brand-surface transition flex items-center gap-1.5" title="Supabase DB Setup">
+                        <i class="fa-solid fa-gear"></i>
+                        <span class="hidden sm:inline">DB Settings</span>
+                    </button>
+                    
+                    <button onclick="toggleCartDrawer()" class="relative bg-brand-gold text-brand-dark px-4 py-2 rounded-xl font-bold hover:bg-brand-goldHover transition flex items-center gap-2 shadow-md">
+                        <i class="fa-solid fa-bag-shopping text-base"></i>
+                        <span class="hidden sm:inline">Cart</span>
+                        <span id="header-cart-badge" class="bg-brand-dark text-brand-gold text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="relative bg-gradient-to-b from-brand-card via-brand-dark to-brand-dark py-10 border-b border-brand-surface/40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div class="lg:col-span-7 space-y-4">
+                    <div class="inline-flex items-center gap-2 bg-brand-surface/80 border border-brand-gold/30 text-brand-gold px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
+                        <i class="fa-solid fa-mug-hot"></i> Baler's Premier Riverside Cafe & Craft Beer
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold font-serif leading-tight">
+                        Authentic Flavors, <br><span class="gold-gradient-text">Chill Beach Vibes.</span>
+                    </h2>
+                    <p class="text-brand-muted text-sm sm:text-base max-w-xl">
+                        Order online directly for Dine-In, Take-Out, or Delivery in Baler. Freshly brewed coffees, sourdough pizzas, craft beers, and local favorites served fresh daily!
+                    </p>
+                    <div class="flex flex-wrap gap-4 pt-2 text-xs text-brand-muted">
+                        <div class="flex items-center gap-1.5"><i class="fa-regular fa-clock text-brand-gold"></i> Open Thu - Mon: 11:00 AM - 9:00 PM</div>
+                        <div class="flex items-center gap-1.5"><i class="fa-solid fa-phone text-brand-gold"></i> Direct Cafe Ordering</div>
+                    </div>
+                </div>
+
+                <!-- Store Info Card -->
+                <div class="lg:col-span-5">
+                    <div class="bg-brand-card/90 rounded-2xl p-5 border border-brand-surface shadow-xl relative overflow-hidden">
+                        <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-brand-gold/5 rounded-full blur-2xl"></div>
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-16 h-16 rounded-full bg-brand-surface border-2 border-brand-gold flex-shrink-0 flex items-center justify-center p-1">
+                                <div class="w-full h-full rounded-full bg-[#1b3022] flex flex-col items-center justify-center text-center p-1 border border-brand-gold/50">
+                                    <span class="text-[11px] font-black tracking-widest text-brand-gold uppercase leading-none">Wahana</span>
+                                    <span class="text-[8px] text-white/80 uppercase">CAFE</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg font-serif">Wahana Cafe Baler</h3>
+                                <p class="text-xs text-brand-gold font-medium">Baler, Aurora, Philippines</p>
+                                <div class="flex items-center gap-1 text-xs text-amber-400 mt-1">
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star-half-stroke"></i>
+                                    <span class="text-xs text-brand-muted ml-1">(4.8/5 Rated Cafe)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-brand-surface/50 rounded-xl p-3 text-xs space-y-1.5 border border-brand-surface/80">
+                            <div class="flex justify-between">
+                                <span class="text-brand-muted">Address:</span>
+                                <span class="text-right font-medium">Extension Dela Torre St., Baler, Aurora</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-brand-muted">Status:</span>
+                                <span class="text-emerald-400 font-semibold flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span> Accepting Orders</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 flex-grow w-full">
+
+        <!-- STEP 1: ORDER MODE SELECTION -->
+        <section id="order-mode-section" class="scroll-mt-24">
+            <div class="bg-brand-card rounded-2xl p-6 sm:p-8 border-2 border-brand-gold/40 shadow-2xl relative">
+                
+                <div class="text-center max-w-2xl mx-auto mb-6">
+                    <span class="text-xs font-bold uppercase tracking-widest text-brand-gold bg-brand-surface px-3 py-1 rounded-full border border-brand-gold/20">Step 1 of 2</span>
+                    <h3 class="text-2xl sm:text-3xl font-bold font-serif mt-2">Select Your Order Mode</h3>
+                    <p class="text-xs sm:text-sm text-brand-muted mt-1">Please select how you'd like to receive your food before adding items to your cart.</p>
+                </div>
+
+                <!-- 3 Main Selectable Buttons -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <button type="button" onclick="selectOrderMode('dine-in')" id="mode-btn-dine-in" 
+                        class="mode-btn group relative p-5 rounded-2xl border-2 border-brand-surface bg-brand-surface/40 hover:border-brand-gold transition duration-200 text-left flex flex-col justify-between h-32">
+                        <div class="flex items-center justify-between">
+                            <div class="w-10 h-10 rounded-xl bg-brand-surface flex items-center justify-center text-brand-gold text-lg group-hover:scale-110 transition">
+                                <i class="fa-solid fa-utensils"></i>
+                            </div>
+                            <span class="badge-selected hidden text-xs font-bold bg-brand-gold text-brand-dark px-2.5 py-1 rounded-full"><i class="fa-solid fa-check mr-1"></i>Selected</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg">Dine-In</h4>
+                            <p class="text-xs text-brand-muted">Eat inside Wahana Cafe. Requires table number.</p>
+                        </div>
+                    </button>
+
+                    <button type="button" onclick="selectOrderMode('take-out')" id="mode-btn-take-out" 
+                        class="mode-btn group relative p-5 rounded-2xl border-2 border-brand-surface bg-brand-surface/40 hover:border-brand-gold transition duration-200 text-left flex flex-col justify-between h-32">
+                        <div class="flex items-center justify-between">
+                            <div class="w-10 h-10 rounded-xl bg-brand-surface flex items-center justify-center text-brand-gold text-lg group-hover:scale-110 transition">
+                                <i class="fa-solid fa-bag-shopping"></i>
+                            </div>
+                            <span class="badge-selected hidden text-xs font-bold bg-brand-gold text-brand-dark px-2.5 py-1 rounded-full"><i class="fa-solid fa-check mr-1"></i>Selected</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg">Take-Out</h4>
+                            <p class="text-xs text-brand-muted">Pick up at cafe counter with unique claim #.</p>
+                        </div>
+                    </button>
+
+                    <button type="button" onclick="selectOrderMode('delivery')" id="mode-btn-delivery" 
+                        class="mode-btn group relative p-5 rounded-2xl border-2 border-brand-surface bg-brand-surface/40 hover:border-brand-gold transition duration-200 text-left flex flex-col justify-between h-32">
+                        <div class="flex items-center justify-between">
+                            <div class="w-10 h-10 rounded-xl bg-brand-surface flex items-center justify-center text-brand-gold text-lg group-hover:scale-110 transition">
+                                <i class="fa-solid fa-motorcycle"></i>
+                            </div>
+                            <span class="badge-selected hidden text-xs font-bold bg-brand-gold text-brand-dark px-2.5 py-1 rounded-full"><i class="fa-solid fa-check mr-1"></i>Selected</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg">Delivery</h4>
+                            <p class="text-xs text-brand-muted">Delivered directly to your door in Baler.</p>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- CONDITIONAL FORM INPUTS ACCORDING TO MODE -->
+                <div id="order-fields-container" class="bg-brand-surface/30 rounded-xl p-5 border border-brand-surface/70 transition-all duration-300 hidden">
+                    
+                    <!-- DINE-IN INPUTS -->
+                    <div id="fields-dine-in" class="mode-fields space-y-4 hidden">
+                        <h4 class="font-bold text-brand-gold text-sm uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-utensils"></i> Dine-In Customer Details
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Your Full Name <span class="text-brand-gold">*</span></label>
+                                <input type="text" id="dine-in-name" placeholder="e.g. Maria Santos" class="w-full bg-brand-surface border border-brand-surface focus:border-brand-gold rounded-xl p-3 text-sm text-brand-light outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Table Number <span class="text-brand-gold">*</span></label>
+                                <input type="number" id="dine-in-table" placeholder="e.g. 5" min="1" class="w-full bg-brand-surface border border-brand-surface focus:border-brand-gold rounded-xl p-3 text-sm text-brand-light outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAKE-OUT INPUTS -->
+                    <div id="fields-take-out" class="mode-fields space-y-4 hidden">
+                        <h4 class="font-bold text-brand-gold text-sm uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-bag-shopping"></i> Take-Out Claim Details
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Your Name <span class="text-brand-gold">*</span></label>
+                                <input type="text" id="takeout-name" placeholder="e.g. Juan Dela Cruz" class="w-full bg-brand-surface border border-brand-surface focus:border-brand-gold rounded-xl p-3 text-sm text-brand-light outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Contact Phone Number <span class="text-brand-gold">*</span></label>
+                                <input type="tel" id="takeout-phone" placeholder="0917XXXXXXX" class="w-full bg-brand-surface border border-brand-surface focus:border-brand-gold rounded-xl p-3 text-sm text-brand-light outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Claim Ticket # (Unique) <span class="text-brand-gold">*</span></label>
+                                <div class="relative">
+                                    <input type="number" id="takeout-claim-no" oninput="checkClaimNumberRealtime(this.value)" placeholder="e.g. 103" class="w-full bg-brand-surface border border-brand-surface focus:border-brand-gold rounded-xl p-3 text-sm text-brand-light outline-none pr-10">
+                                    <i id="claim-check-spinner" class="fa-solid fa-spinner animate-spin absolute right-3 top-3.5 text-brand-gold hidden"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="claim-number-warning" class="hidden text-xs bg-red-950/80 border border-red-500/50 text-red-200 p-3 rounded-xl flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                            <span id="claim-warning-text">Claim number already taken!</span>
+                        </div>
+                        <div id="claim-number-success" class="hidden text-xs bg-emerald-950/80 border border-emerald-500/50 text-emerald-200 p-3 rounded-xl flex items-center gap-2">
+                            <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                            <span>Ticket claim number available!</span>
+                        </div>
+                    </div>
+
+                    <!-- DELIVERY INPUTS -->
+                    <div id="fields-delivery" class="mode-fields space-y-4 hidden">
+                        <h4 class="font-bold text-brand-gold text-sm uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-motorcycle"></i> Baler Delivery Address
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Recipient Name <span class="text-brand-gold">*</span></label>
+                                <input type="text" id="delivery-name" placeholder="e.g. Alex Santos" class="w-full bg-brand-surface border border-brand-surface focus:border-brand-gold rounded-xl p-3 text-sm text-brand-light outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Phone Number <span class="text-brand-gold">*</span></label>
+                                <input type="tel" id="delivery-phone" placeholder="0917XXXXXXX" class="w-full bg-brand-surface border border-brand-surface focus:border-brand-gold rounded-xl p-3 text-sm text-brand-light outline-none">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Street Address / Resort Name / Landmark <span class="text-brand-gold">*</span></label>
+                                <input type="text" id="delivery-street" placeholder="e.g. Sabang Beach, House #12 Dela Torre Ext." class="w-full bg-brand-surface border border-brand-surface focus:border-brand-gold rounded-xl p-3 text-sm text-brand-light outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Barangay <span class="text-brand-gold">*</span></label>
+                                <input type="text" id="delivery-barangay" placeholder="e.g. Barangay Buhangin" class="w-full bg-brand-surface border border-brand-surface focus:border-brand-gold rounded-xl p-3 text-sm text-brand-light outline-none">
+                            </div>
+                        </div>
+                        <input type="hidden" id="delivery-city" value="Baler, Aurora">
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 2: MENU & CART SECTION -->
+        <section id="menu-section" class="opacity-50 pointer-events-none transition-all duration-300">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-widest text-brand-gold bg-brand-surface px-3 py-1 rounded-full border border-brand-gold/20">Step 2 of 2</span>
+                    <h3 class="text-2xl font-bold font-serif mt-2">Explore Our Menu</h3>
+                </div>
+                <div id="mode-status-text" class="text-xs text-brand-muted bg-brand-card px-3 py-1.5 rounded-lg border border-brand-surface">
+                    Please choose order mode above first
+                </div>
+            </div>
+
+            <!-- Category Pills -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-4 pt-1 no-scrollbar">
+                <button onclick="filterCategory('all')" class="cat-pill active bg-brand-gold text-brand-dark px-4 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition">
+                    <i class="fa-solid fa-border-all mr-1"></i> All Items
+                </button>
+                <button onclick="filterCategory('espresso')" class="cat-pill bg-brand-surface text-brand-light hover:text-brand-gold px-4 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition">
+                    <i class="fa-solid fa-mug-saucer mr-1"></i> Espresso
+                </button>
+                <button onclick="filterCategory('non-coffee')" class="cat-pill bg-brand-surface text-brand-light hover:text-brand-gold px-4 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition">
+                    <i class="fa-solid fa-glass-water mr-1"></i> Non-Coffee & Soda
+                </button>
+                <button onclick="filterCategory('beer')" class="cat-pill bg-brand-surface text-brand-light hover:text-brand-gold px-4 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition">
+                    <i class="fa-solid fa-beer-mug-empty mr-1"></i> Aurora Craft Beer
+                </button>
+                <button onclick="filterCategory('pizza')" class="cat-pill bg-brand-surface text-brand-light hover:text-brand-gold px-4 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition">
+                    <i class="fa-solid fa-pizza-slice mr-1"></i> Sourdough Pizza
+                </button>
+                <button onclick="filterCategory('rice')" class="cat-pill bg-brand-surface text-brand-light hover:text-brand-gold px-4 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition">
+                    <i class="fa-solid fa-bowl-rice mr-1"></i> Rice Meals
+                </button>
+                <button onclick="filterCategory('pasta')" class="cat-pill bg-brand-surface text-brand-light hover:text-brand-gold px-4 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition">
+                    <i class="fa-solid fa-utensils mr-1"></i> Pasta
+                </button>
+                <button onclick="filterCategory('snacks')" class="cat-pill bg-brand-surface text-brand-light hover:text-brand-gold px-4 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition">
+                    <i class="fa-solid fa-burger mr-1"></i> Snacks & Burgers
+                </button>
+                <button onclick="filterCategory('waffles')" class="cat-pill bg-brand-surface text-brand-light hover:text-brand-gold px-4 py-2 rounded-xl text-xs font-bold flex-shrink-0 transition">
+                    <i class="fa-solid fa-stroopwafel mr-1"></i> Waffles & Pancakes
+                </button>
+            </div>
+
+            <!-- MENU GRID & DESKTOP CART -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Menu Grid -->
+                <div id="menu-grid" class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Dynamic items rendered by JS -->
+                </div>
+
+                <!-- Desktop Cart Sidebar -->
+                <div class="hidden lg:block lg:col-span-4 sticky top-24">
+                    <div class="bg-brand-card rounded-2xl border border-brand-surface/80 p-5 shadow-xl space-y-4">
+                        <div class="flex items-center justify-between border-b border-brand-surface/80 pb-3">
+                            <h4 class="font-bold font-serif text-lg flex items-center gap-2">
+                                <i class="fa-solid fa-bag-shopping text-brand-gold"></i> Your Order Cart
+                            </h4>
+                            <span id="cart-mode-label" class="text-xs bg-brand-surface text-brand-gold px-2.5 py-1 rounded-full font-semibold uppercase">No Mode Selected</span>
+                        </div>
+
+                        <!-- Cart Items List -->
+                        <div id="cart-items-container" class="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
+                            <!-- Items injected dynamically -->
+                        </div>
+
+                        <!-- Subtotal & Calculations -->
+                        <div class="border-t border-brand-surface/80 pt-3 space-y-2 text-xs">
+                            <div class="flex justify-between text-brand-muted">
+                                <span>Subtotal</span>
+                                <span id="cart-subtotal" class="font-mono text-brand-light font-bold">₱0.00</span>
+                            </div>
+                            <div class="flex justify-between text-brand-muted">
+                                <span>Delivery Fee (Baler)</span>
+                                <span id="cart-delivery-fee" class="font-mono text-brand-light font-bold">₱0.00</span>
+                            </div>
+                            <div class="flex justify-between text-base font-bold text-brand-gold border-t border-brand-surface/60 pt-2">
+                                <span>Total Amount</span>
+                                <span id="cart-total" class="font-mono">₱0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Checkout Button -->
+                        <button onclick="submitOrder()" class="w-full bg-brand-gold hover:bg-brand-goldHover text-brand-dark py-3.5 rounded-xl font-bold transition duration-200 shadow-lg flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> Place Order Now
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MOBILE STICKY BOTTOM CART BAR -->
+    <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-brand-card/95 backdrop-blur-md border-t border-brand-surface/80 p-3 z-30 shadow-2xl">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+            <div>
+                <span class="text-[10px] text-brand-muted uppercase block">Total Order</span>
+                <span id="mobile-cart-total" class="font-bold font-mono text-brand-gold text-lg">₱0.00</span>
+            </div>
+            <button onclick="toggleCartDrawer()" class="bg-brand-gold text-brand-dark font-bold px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 shadow-md">
+                <i class="fa-solid fa-bag-shopping"></i>
+                <span>View Cart</span>
+                <span id="mobile-cart-count" class="bg-brand-dark text-brand-gold text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- MOBILE CART DRAWER MODAL -->
+    <div id="cart-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex justify-end">
+        <div class="bg-brand-card w-full max-w-md h-full flex flex-col justify-between p-6 overflow-y-auto">
+            <div>
+                <div class="flex items-center justify-between border-b border-brand-surface/80 pb-4 mb-4">
+                    <h3 class="font-bold font-serif text-xl flex items-center gap-2">
+                        <i class="fa-solid fa-bag-shopping text-brand-gold"></i> Your Cart
+                    </h3>
+                    <button onclick="toggleCartDrawer()" class="w-8 h-8 rounded-full bg-brand-surface flex items-center justify-center text-brand-muted hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div id="mobile-drawer-items" class="space-y-3 my-4">
+                    <!-- Mobile drawer cart items -->
+                </div>
+            </div>
+
+            <div class="border-t border-brand-surface/80 pt-4 space-y-3">
+                <div class="flex justify-between text-sm text-brand-muted">
+                    <span>Subtotal</span>
+                    <span id="drawer-subtotal" class="font-semibold text-brand-light">₱0.00</span>
+                </div>
+                <div class="flex justify-between text-sm text-brand-muted" id="drawer-delivery-row">
+                    <span>Delivery Fee</span>
+                    <span id="drawer-delivery" class="font-semibold text-brand-light">₱0.00</span>
+                </div>
+                <div class="flex justify-between text-lg font-bold text-brand-gold border-t border-brand-surface/60 pt-2">
+                    <span>Total Amount</span>
+                    <span id="drawer-total">₱0.00</span>
+                </div>
+                <button onclick="submitOrder()" class="w-full bg-brand-gold hover:bg-brand-goldHover text-brand-dark py-4 rounded-xl font-bold text-center shadow-lg transition mt-4">
+                    Confirm & Place Order
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MANDATORY ORDER CONFIRMATION / WAITING SCREEN MODAL -->
+    <div id="waiting-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card rounded-2xl border-2 border-brand-gold/60 p-8 max-w-md w-full text-center space-y-6 shadow-2xl relative overflow-hidden">
+            <div class="w-20 h-20 rounded-full bg-brand-surface border-2 border-brand-gold mx-auto flex items-center justify-center relative">
+                <i class="fa-solid fa-mug-hot text-brand-gold text-3xl animate-pulse"></i>
+                <div class="absolute inset-0 rounded-full border-2 border-brand-gold border-t-transparent animate-spin"></div>
+            </div>
+
+            <div class="space-y-2">
+                <h3 class="text-2xl font-bold font-serif text-brand-gold">Please wait, your order is being confirmed</h3>
+                <p class="text-xs text-brand-muted">Our kitchen at Wahana Cafe is processing your order request directly into our order board.</p>
+            </div>
+
+            <div class="bg-brand-surface/60 rounded-xl p-4 border border-brand-surface/80 text-left space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-brand-muted">Status:</span>
+                    <span class="text-emerald-400 font-semibold flex items-center gap-1"><i class="fa-solid fa-check"></i> Connected</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-brand-muted">Order ID:</span>
+                    <span id="waiting-order-id" class="font-mono text-brand-gold">WHN-8921</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-brand-muted">Mode:</span>
+                    <span id="waiting-order-mode" class="font-bold text-white uppercase">Take-Out</span>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <div class="w-full bg-brand-surface rounded-full h-2 overflow-hidden">
+                    <div id="waiting-progress-bar" class="bg-brand-gold h-full w-0 transition-all duration-1000"></div>
+                </div>
+                <p id="waiting-countdown-text" class="text-[11px] text-brand-muted mt-2">Connecting with cafe terminal (3s)...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FINAL RECEIPT CONFIRMATION MODAL -->
+    <div id="receipt-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card rounded-2xl border border-brand-gold/40 p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto space-y-5 shadow-2xl">
+            <div class="text-center border-b border-brand-surface/80 pb-4">
+                <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 mx-auto flex items-center justify-center text-xl mb-2">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <h3 class="text-2xl font-bold font-serif text-white">Order Confirmed!</h3>
+                <p class="text-xs text-brand-muted">Thank you for dining with Wahana Cafe Baler!</p>
+            </div>
+
+            <div id="receipt-details-body" class="bg-brand-surface/40 rounded-xl p-4 space-y-3 text-xs border border-brand-surface">
+                <!-- Receipt injected by JS -->
+            </div>
+
+            <div class="bg-brand-gold/10 border border-brand-gold/30 rounded-xl p-3 text-xs text-brand-gold flex items-center gap-3">
+                <i class="fa-solid fa-circle-info text-base flex-shrink-0"></i>
+                <span>Show this confirmation screen to our staff at Wahana Cafe Dela Torre Ext. when picking up or receiving delivery.</span>
+            </div>
+
+            <button onclick="resetAndNewOrder()" class="w-full bg-brand-gold hover:bg-brand-goldHover text-brand-dark py-3 rounded-xl font-bold shadow-lg transition">
+                Place Another Order
+            </button>
+        </div>
+    </div>
+
+    <!-- SUPABASE DB CONFIG MODAL -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card rounded-2xl border border-brand-surface p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-brand-surface/80 pb-3">
+                <h3 class="font-bold text-lg font-serif text-brand-gold flex items-center gap-2">
+                    <i class="fa-solid fa-database"></i> Supabase Settings
+                </h3>
+                <button onclick="toggleSettingsModal()" class="text-brand-muted hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-xs text-brand-muted">
+                This app is integrated with Supabase REST client. You can provide your official Supabase project keys below or use local mode simulation.
+            </p>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block mb-1 text-brand-muted">Supabase Project URL</label>
+                    <input type="text" id="supabase-url" placeholder="https://xyz.supabase.co" class="w-full bg-brand-surface border border-brand-surface rounded-lg p-2.5 text-white">
+                </div>
+                <div>
+                    <label class="block mb-1 text-brand-muted">Supabase Anon Key</label>
+                    <input type="password" id="supabase-key" placeholder="eyJhbGciOi..." class="w-full bg-brand-surface border border-brand-surface rounded-lg p-2.5 text-white">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="toggleSettingsModal()" class="px-4 py-2 rounded-lg bg-brand-surface text-brand-muted hover:text-white text-xs font-semibold">Close</button>
+                <button onclick="saveSupabaseKeys()" class="px-4 py-2 rounded-lg bg-brand-gold text-brand-dark text-xs font-bold">Save Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-brand-card border-t border-brand-surface/60 py-8 text-xs text-brand-muted">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-3">
+            <div class="flex items-center justify-center gap-2">
+                <span class="font-serif font-bold text-brand-gold">WAHANA CAFE BALER</span>
+                <span>•</span>
+                <span>Est. 2023</span>
+            </div>
+            <p>Extension Dela Torre Street, Baler, 3200 Aurora, Philippines</p>
+            <p class="text-[10px] text-brand-muted/70">© 2026 Wahana Cafe. Official Food & Drink Menu.</p>
+        </div>
+    </footer>
+
+    <!-- SCRIPT LOGIC -->
+    <script>
+        /* HARDCODED SUPABASE CREDENTIALS */
+        const HARDCODED_SUPABASE_URL = "https://xwuuuawvzeicfetqbtdd.supabase.co";
+        const HARDCODED_SUPABASE_KEY = "sb_publishable_CgZdO-CFW1nWEm3qjsUYRQ_GJwe9EIL";
+
+        /* OFFICIAL MENU DATA */
+        const MENU_ITEMS = [
+            // Espresso Drinks
+            { id: 'esp-1', category: 'espresso', name: 'Americano', price: 100, desc: 'One espresso, water', img: '☕' },
+            { id: 'esp-2', category: 'espresso', name: 'Latte', price: 130, desc: 'One espresso, fresh milk', img: '🥛' },
+            { id: 'esp-3', category: 'espresso', name: 'Spanish Latte', price: 150, desc: 'One espresso, milk, condensed milk', img: '☕' },
+            { id: 'esp-4', category: 'espresso', name: 'Caramel Macchiato', price: 150, desc: 'One espresso, milk, vanilla syrup, caramel drizzle', img: '🧋' },
+            { id: 'esp-5', category: 'espresso', name: 'Hazelnut Mocha', price: 150, desc: 'One espresso, milk, hazelnut syrup, chocolate drizzle', img: '☕' },
+            { id: 'esp-6', category: 'espresso', name: 'Matcha Espresso Fusion', price: 150, desc: 'One espresso, milk, pure ceremonial matcha', img: '🍵' },
+            { id: 'esp-7', category: 'espresso', name: 'Salted Caramel Espresso', price: 150, desc: 'One espresso, milk, rich salted caramel sauce', img: '🍯' },
+            { id: 'esp-8', category: 'espresso', name: 'White Chocolate Espresso', price: 150, desc: 'One espresso, milk, white chocolate sauce', img: '🍫' },
+
+            // Non-Coffee & Soda
+            { id: 'nc-1', category: 'non-coffee', name: 'Signature Chocolate', price: 150, desc: 'Dark chocolate sauce, steamed/iced milk', img: '🍫' },
+            { id: 'nc-2', category: 'non-coffee', name: 'Matcha Latte', price: 150, desc: 'Ceremonial matcha, milk', img: '🍵' },
+            { id: 'nc-3', category: 'non-coffee', name: 'Strawberry Milk', price: 160, desc: 'Strawberry purée, fresh milk', img: '🍓' },
+            { id: 'nc-4', category: 'non-coffee', name: 'Lychee Soda', price: 99, desc: 'Refreshing sparkling lychee cooler', img: '🍹' },
+            { id: 'nc-5', category: 'non-coffee', name: 'Mango Soda', price: 99, desc: 'Sparkling tropical mango fizz', img: '🥭' },
+            { id: 'nc-6', category: 'non-coffee', name: 'Green Apple Mango Soda', price: 99, desc: 'Crisp green apple and sweet mango blend', img: '🍏' },
+
+            // Local Aurora Craft Beer & Cans
+            { id: 'beer-1', category: 'beer', name: 'Aurora Sunrise Craft Beer', price: 130, desc: 'Hazy pale ale 5.5% ABV', img: '🍺' },
+            { id: 'beer-2', category: 'beer', name: 'Wahana Blonde Craft Beer', price: 100, desc: 'Blonde ale 5.0% ABV', img: '🍺' },
+            { id: 'beer-3', category: 'beer', name: 'Milky Way Stout', price: 150, desc: 'Chocolate stout 5.5% ABV', img: '🍺' },
+            { id: 'beer-4', category: 'beer', name: 'Jambeeree 18 IPA', price: 180, desc: 'American IPA 6.7% ABV', img: '🍺' },
+            { id: 'beer-5', category: 'beer', name: 'Roses Are Red Sour', price: 130, desc: 'Hibiscus raspberry sour 5.5% ABV', img: '🍺' },
+            { id: 'beer-6', category: 'beer', name: 'Hoppy Hour 2 Beers Special', price: 200, desc: 'Special promo: Any 2 selected craft beers', img: '🍻' },
+
+            // Pizzas
+            { id: 'piz-1', category: 'pizza', name: 'Pizza Margherita', price: 250, desc: 'Classic sourdough crust, tomato sauce, mozzarella, fresh basil', img: '🍕' },
+            { id: 'piz-2', category: 'pizza', name: 'Olive & Bacon Pizza', price: 280, desc: 'Black olives, savory bacon, melted cheese', img: '🍕' },
+            { id: 'piz-3', category: 'pizza', name: 'Honey Salami Pizza', price: 300, desc: 'Salami, mozzarella, wildflower honey drizzle', img: '🍕' },
+            { id: 'piz-4', category: 'pizza', name: 'Honey, Truffle & Cheese Pizza', price: 300, desc: 'Truffle cream, blend of cheeses, honey drizzle', img: '🍕' },
+            { id: 'piz-5', category: 'pizza', name: 'Four Cheese Pizza', price: 300, desc: 'Rich blend of cheddar, mozzarella, parmesan, & blue cheese', img: '🍕' },
+            { id: 'piz-6', category: 'pizza', name: 'Pepperoni Pizza', price: 300, desc: 'Loaded with classic pepperoni and mozzarella', img: '🍕' },
+
+            // Rice Meals
+            { id: 'rice-1', category: 'rice', name: 'Shanghai Rice Meal', price: 130, desc: 'Crispy pork lumpiang shanghai served with garlic rice & egg', img: '🍱' },
+            { id: 'rice-2', category: 'rice', name: 'Bacsilog', price: 140, desc: 'Savory bacon, garlic rice, and fried egg', img: '🍳' },
+            { id: 'rice-3', category: 'rice', name: 'Garlic Longganisa', price: 140, desc: 'Local garlic longganisa, sinangag, and sunny-side egg', img: '🍳' },
+            { id: 'rice-4', category: 'rice', name: 'Bistek Tagalog', price: 160, desc: 'Tender marinated beef slices with onions & rice', img: '🥩' },
+
+            // Pasta
+            { id: 'pas-1', category: 'pasta', name: 'Creamy Tuna Pesto', price: 180, desc: 'Penne pasta in rich basil pesto and tuna cream sauce', img: '🍝' },
+            { id: 'pas-2', category: 'pasta', name: 'Mushroom Truffle Pasta', price: 180, desc: 'Creamy truffle sauce with sautéed mushrooms', img: '🍝' },
+
+            // Snacks & Sides
+            { id: 'snk-1', category: 'snacks', name: 'Cheesy Bacon Fries', price: 140, desc: 'Crispy potato fries smothered in cheese sauce & bacon bits', img: '🍟' },
+            { id: 'snk-2', category: 'snacks', name: 'Wahana Burger', price: 210, desc: 'Signature beef patty, fresh lettuce, tomato, cheese & sauce', img: '🍔' },
+            { id: 'snk-3', category: 'snacks', name: 'Nachos Supreme', price: 200, desc: 'Tortilla chips topped with ground beef, cheese sauce & salsa', img: '🌮' },
+            { id: 'snk-4', category: 'snacks', name: 'Potato Mojos', price: 160, desc: 'Deep-fried seasoned potato slices with dip', img: '🥔' },
+            { id: 'snk-5', category: 'snacks', name: 'Lumpiang Shanghai (Platter)', price: 160, desc: 'Crispy spring rolls with sweet chili dip', img: '🥢' },
+            { id: 'snk-6', category: 'snacks', name: 'Cheese Sticks', price: 110, desc: 'Golden fried cheese rolls (8 pcs)', img: '🧀' },
+
+            // Waffles & Pancakes
+            { id: 'waf-1', category: 'waffles', name: 'Chocolate Waffle', price: 140, desc: 'Freshly baked waffle with chocolate sauce', img: '🧇' },
+            { id: 'waf-2', category: 'waffles', name: 'Chocolate Chip Waffle', price: 130, desc: 'Two slices waffle with chocolate chips, whipped cream, chocolate drizzle', img: '🧇' },
+            { id: 'waf-3', category: 'waffles', name: 'Maple & Butter Pancake', price: 80, desc: 'Two pieces fluffy pancake with butter & maple syrup', img: '🥞' },
+            { id: 'waf-4', category: 'waffles', name: 'Chocolate Chip Pancake', price: 110, desc: 'Two-piece pancake with chocolate chips & whipped cream', img: '🥞' },
+            { id: 'waf-5', category: 'waffles', name: 'Classic Savory Pancake', price: 160, desc: 'Two-piece pancake, scrambled eggs, chicken franks, bacon', img: '🥞' }
+        ];
+
+        /* APP STATE */
+        let currentOrderMode = null; // 'dine-in', 'take-out', 'delivery'
+        let shoppingCart = {}; // { item_id: { item, qty } }
+        let reservedTakeoutClaimNumbers = [101, 102, 105, 108, 120];
+        let isClaimNumberValid = false;
+        let supabaseClient = null;
+
+        /* INITIALIZATION */
+        window.onload = function() {
+            renderMenu('all');
+            initSupabaseFromStorage();
+        };
+
+        /* SUPABASE INTEGRATION */
+        function initSupabaseFromStorage() {
+            // First check hardcoded credentials, fallback to localStorage
+            const url = HARDCODED_SUPABASE_URL || localStorage.getItem('wahana_sb_url');
+            const key = HARDCODED_SUPABASE_KEY || localStorage.getItem('wahana_sb_key');
+            if (url && key && window.supabase) {
+                try {
+                    supabaseClient = window.supabase.createClient(url, key);
+                    const urlInput = document.getElementById('supabase-url');
+                    const keyInput = document.getElementById('supabase-key');
+                    if (urlInput) urlInput.value = url;
+                    if (keyInput) keyInput.value = key;
+                } catch(e) {
+                    console.log('Supabase init fallback');
+                }
+            }
+        }
+
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            if (modal) modal.classList.toggle('hidden');
+        }
+
+        function saveSupabaseKeys() {
+            const url = document.getElementById('supabase-url')?.value.trim();
+            const key = document.getElementById('supabase-key')?.value.trim();
+            if (url && key) {
+                localStorage.setItem('wahana_sb_url', url);
+                localStorage.setItem('wahana_sb_key', key);
+                initSupabaseFromStorage();
+                showToast('Supabase settings saved successfully!', 'success');
+            } else {
+                localStorage.removeItem('wahana_sb_url');
+                localStorage.removeItem('wahana_sb_key');
+                supabaseClient = null;
+                showToast('Switched to Supabase fallback simulation mode.', 'info');
+            }
+            toggleSettingsModal();
+        }
+
+        /* ORDER MODE SELECTION */
+        function selectOrderMode(mode) {
+            currentOrderMode = mode;
+
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('border-brand-gold', 'bg-brand-surface/90', 'gold-border-glow');
+                const badge = btn.querySelector('.badge-selected');
+                if (badge) badge.classList.add('hidden');
+            });
+
+            const selectedBtn = document.getElementById(`mode-btn-${mode}`);
+            if (selectedBtn) {
+                selectedBtn.classList.add('border-brand-gold', 'bg-brand-surface/90', 'gold-border-glow');
+                const badge = selectedBtn.querySelector('.badge-selected');
+                if (badge) badge.classList.remove('hidden');
+            }
+
+            const fieldsContainer = document.getElementById('order-fields-container');
+            if (fieldsContainer) fieldsContainer.classList.remove('hidden');
+
+            document.querySelectorAll('.mode-fields').forEach(f => f.classList.add('hidden'));
+            const modeFields = document.getElementById(`fields-${mode}`);
+            if (modeFields) modeFields.classList.remove('hidden');
+
+            const menuSection = document.getElementById('menu-section');
+            if (menuSection) menuSection.classList.remove('opacity-50', 'pointer-events-none');
+
+            const modeName = mode === 'dine-in' ? 'Dine-In' : (mode === 'take-out' ? 'Take-Out' : 'Delivery');
+            const modeLabel = document.getElementById('cart-mode-label');
+            if (modeLabel) modeLabel.innerText = modeName;
+            
+            const statusText = document.getElementById('mode-status-text');
+            if (statusText) statusText.innerHTML = `<strong class="text-brand-gold">${modeName} Mode Active</strong> - Add items to cart below`;
+
+            updateCartUI();
+            showToast(`Selected mode: ${modeName}`, 'info');
+        }
+
+        /* REAL-TIME CLAIM NUMBER VALIDATION */
+        async function checkClaimNumberRealtime(claimNo) {
+            const warningBox = document.getElementById('claim-number-warning');
+            const successBox = document.getElementById('claim-number-success');
+            const spinner = document.getElementById('claim-check-spinner');
+
+            if (!claimNo || claimNo <= 0) {
+                if (warningBox) warningBox.classList.add('hidden');
+                if (successBox) successBox.classList.add('hidden');
+                isClaimNumberValid = false;
+                return;
+            }
+
+            if (spinner) spinner.classList.remove('hidden');
+            const num = parseInt(claimNo);
+
+            let isTaken = false;
+
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('wahana_orders')
+                        .select('claim_number')
+                        .eq('claim_number', num)
+                        .limit(1);
+
+                    if (!error && data && data.length > 0) {
+                        isTaken = true;
+                    }
+                } catch(err) {
+                    isTaken = reservedTakeoutClaimNumbers.includes(num);
+                }
+            } else {
+                await new Promise(r => setTimeout(r, 250));
+                isTaken = reservedTakeoutClaimNumbers.includes(num);
+            }
+
+            if (spinner) spinner.classList.add('hidden');
+
+            if (isTaken) {
+                if (warningBox) {
+                    warningBox.classList.remove('hidden');
+                    const warningText = document.getElementById('claim-warning-text');
+                    if (warningText) warningText.innerText = `Claim #${num} is ALREADY RESERVED! Pick another number.`;
+                }
+                if (successBox) successBox.classList.add('hidden');
+                isClaimNumberValid = false;
+            } else {
+                if (warningBox) warningBox.classList.add('hidden');
+                if (successBox) successBox.classList.remove('hidden');
+                isClaimNumberValid = true;
+            }
+        }
+
+        /* MENU RENDER & FILTERING */
+        function renderMenu(categoryFilter = 'all') {
+            const menuGrid = document.getElementById('menu-grid');
+            if (!menuGrid) return;
+
+            menuGrid.innerHTML = '';
+
+            const itemsToDisplay = categoryFilter === 'all' 
+                ? MENU_ITEMS 
+                : MENU_ITEMS.filter(item => item.category === categoryFilter);
+
+            itemsToDisplay.forEach(item => {
+                const qtyInCart = shoppingCart[item.id] ? shoppingCart[item.id].qty : 0;
+
+                const itemCard = document.createElement('div');
+                itemCard.className = 'bg-brand-card rounded-2xl p-4 border border-brand-surface/80 hover:border-brand-gold/40 transition flex flex-col justify-between shadow-lg relative overflow-hidden group';
+                itemCard.innerHTML = `
+                    <div>
+                        <div class="flex items-start justify-between gap-2 mb-2">
+                            <div class="w-10 h-10 rounded-xl bg-brand-surface flex items-center justify-center text-xl shadow-inner group-hover:scale-110 transition">
+                                ${item.img}
+                            </div>
+                            <span class="font-bold text-brand-gold font-mono text-base">₱${item.price.toFixed(2)}</span>
+                        </div>
+                        <h4 class="font-bold text-white text-base leading-snug">${item.name}</h4>
+                        <p class="text-xs text-brand-muted mt-1 leading-relaxed">${item.desc}</p>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-brand-surface/60 flex items-center justify-between">
+                        <span class="text-[11px] text-brand-muted">Item #${item.id}</span>
+                        <div class="flex items-center gap-2">
+                            ${qtyInCart > 0 ? `
+                                <div class="flex items-center bg-brand-surface rounded-xl border border-brand-surface p-1">
+                                    <button onclick="updateQty('${item.id}', -1)" class="w-7 h-7 rounded-lg bg-brand-card hover:bg-brand-gold hover:text-brand-dark text-white font-bold flex items-center justify-center text-xs transition">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <span class="w-7 text-center text-xs font-bold font-mono">${qtyInCart}</span>
+                                    <button onclick="updateQty('${item.id}', 1)" class="w-7 h-7 rounded-lg bg-brand-card hover:bg-brand-gold hover:text-brand-dark text-white font-bold flex items-center justify-center text-xs transition">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                </div>
+                            ` : `
+                                <button onclick="addToCart('${item.id}')" class="bg-brand-surface hover:bg-brand-gold hover:text-brand-dark text-brand-light px-3.5 py-1.5 rounded-xl text-xs font-bold border border-brand-surface hover:border-brand-gold transition flex items-center gap-1.5 shadow-sm">
+                                    <i class="fa-solid fa-plus"></i> Add
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+                menuGrid.appendChild(itemCard);
+            });
+        }
+
+        function filterCategory(cat) {
+            document.querySelectorAll('.cat-pill').forEach(btn => {
+                btn.classList.remove('bg-brand-gold', 'text-brand-dark', 'active');
+                btn.classList.add('bg-brand-surface', 'text-brand-light');
+            });
+
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.remove('bg-brand-surface', 'text-brand-light');
+                event.currentTarget.classList.add('bg-brand-gold', 'text-brand-dark', 'active');
+            }
+
+            renderMenu(cat);
+        }
+
+        /* SHOPPING CART LOGIC */
+        function addToCart(itemId) {
+            if (!currentOrderMode) {
+                showToast('Please select an Order Mode first!', 'warning');
+                document.getElementById('order-mode-section')?.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            const item = MENU_ITEMS.find(i => i.id === itemId);
+            if (!item) return;
+
+            if (shoppingCart[itemId]) {
+                shoppingCart[itemId].qty++;
+            } else {
+                shoppingCart[itemId] = { item, qty: 1 };
+            }
+
+            updateCartUI();
+            renderMenu(document.querySelector('.cat-pill.active')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || 'all');
+            showToast(`Added ${item.name} to cart`, 'success');
+        }
+
+        function updateQty(itemId, change) {
+            if (!shoppingCart[itemId]) return;
+
+            shoppingCart[itemId].qty += change;
+            if (shoppingCart[itemId].qty <= 0) {
+                delete shoppingCart[itemId];
+            }
+
+            updateCartUI();
+            renderMenu(document.querySelector('.cat-pill.active')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || 'all');
+        }
+
+        function updateCartUI() {
+            const cartContainer = document.getElementById('cart-items-container');
+            const drawerContainer = document.getElementById('mobile-drawer-items');
+            
+            if (cartContainer) cartContainer.innerHTML = '';
+            if (drawerContainer) drawerContainer.innerHTML = '';
+
+            let subtotal = 0;
+            let totalItemsCount = 0;
+
+            const cartEntries = Object.values(shoppingCart);
+
+            if (cartEntries.length === 0) {
+                const emptyHTML = `
+                    <div class="text-center py-8 text-brand-muted space-y-2">
+                        <i class="fa-solid fa-basket-shopping text-3xl text-brand-surface"></i>
+                        <p class="text-xs">Your order cart is empty.</p>
+                    </div>
+                `;
+                if (cartContainer) cartContainer.innerHTML = emptyHTML;
+                if (drawerContainer) drawerContainer.innerHTML = emptyHTML;
+            } else {
+                cartEntries.forEach(({ item, qty }) => {
+                    const itemTotal = item.price * qty;
+                    subtotal += itemTotal;
+                    totalItemsCount += qty;
+
+                    const cartRowHTML = `
+                        <div class="flex items-center justify-between bg-brand-surface/40 p-2.5 rounded-xl border border-brand-surface/60 text-xs">
+                            <div class="flex-1 pr-2">
+                                <h5 class="font-bold text-white">${item.name}</h5>
+                                <span class="text-brand-muted font-mono">₱${item.price.toFixed(2)} × ${qty} = <strong class="text-brand-gold">₱${itemTotal.toFixed(2)}</strong></span>
+                            </div>
+                            <div class="flex items-center bg-brand-card rounded-lg border border-brand-surface">
+                                <button onclick="updateQty('${item.id}', -1)" class="w-6 h-6 hover:text-brand-gold text-brand-muted flex items-center justify-center font-bold">-</button>
+                                <span class="w-6 text-center font-bold font-mono">${qty}</span>
+                                <button onclick="updateQty('${item.id}', 1)" class="w-6 h-6 hover:text-brand-gold text-brand-muted flex items-center justify-center font-bold">+</button>
+                            </div>
+                        </div>
+                    `;
+
+                    if (cartContainer) cartContainer.innerHTML += cartRowHTML;
+                    if (drawerContainer) drawerContainer.innerHTML += cartRowHTML;
+                });
+            }
+
+            const deliveryFee = (currentOrderMode === 'delivery' && cartEntries.length > 0) ? 40 : 0;
+            const grandTotal = subtotal + deliveryFee;
+
+            const subtotalEl = document.getElementById('cart-subtotal');
+            const drawerSubtotalEl = document.getElementById('drawer-subtotal');
+            if (subtotalEl) subtotalEl.innerText = `₱${subtotal.toFixed(2)}`;
+            if (drawerSubtotalEl) drawerSubtotalEl.innerText = `₱${subtotal.toFixed(2)}`;
+
+            const delFeeEl = document.getElementById('cart-delivery-fee');
+            const drawerDelFeeEl = document.getElementById('drawer-delivery');
+            if (delFeeEl) delFeeEl.innerText = deliveryFee > 0 ? `₱${deliveryFee.toFixed(2)}` : '₱0.00';
+            if (drawerDelFeeEl) drawerDelFeeEl.innerText = deliveryFee > 0 ? `₱${deliveryFee.toFixed(2)}` : '₱0.00';
+
+            const cartTotalEl = document.getElementById('cart-total');
+            const drawerTotalEl = document.getElementById('drawer-total');
+            const mobileTotalEl = document.getElementById('mobile-cart-total');
+            if (cartTotalEl) cartTotalEl.innerText = `₱${grandTotal.toFixed(2)}`;
+            if (drawerTotalEl) drawerTotalEl.innerText = `₱${grandTotal.toFixed(2)}`;
+            if (mobileTotalEl) mobileTotalEl.innerText = `₱${grandTotal.toFixed(2)}`;
+
+            const badgeEl = document.getElementById('header-cart-badge');
+            const mobileCountEl = document.getElementById('mobile-cart-count');
+            if (badgeEl) badgeEl.innerText = totalItemsCount;
+            if (mobileCountEl) mobileCountEl.innerText = totalItemsCount;
+        }
+
+        function toggleCartDrawer() {
+            const modal = document.getElementById('cart-modal');
+            if (modal) modal.classList.toggle('hidden');
+        }
+
+        /* FORM VALIDATION & SUBMIT */
+        function validateOrderFields() {
+            if (!currentOrderMode) {
+                showToast('Please select Dine-In, Take-Out, or Delivery mode!', 'error');
+                return null;
+            }
+
+            const cartItems = Object.values(shoppingCart);
+            if (cartItems.length === 0) {
+                showToast('Your shopping cart is empty! Add food items first.', 'error');
+                return null;
+            }
+
+            let customerDetails = {};
+
+            if (currentOrderMode === 'dine-in') {
+                const name = document.getElementById('dine-in-name')?.value.trim();
+                const table = document.getElementById('dine-in-table')?.value.trim();
+
+                if (!name || !table) {
+                    showToast('Please enter both Full Name and Table Number!', 'error');
+                    return null;
+                }
+                customerDetails = { name, table_number: table };
+            } 
+            else if (currentOrderMode === 'take-out') {
+                const name = document.getElementById('takeout-name')?.value.trim();
+                const phone = document.getElementById('takeout-phone')?.value.trim();
+                const claimNo = document.getElementById('takeout-claim-no')?.value.trim();
+
+                if (!name || !phone || !claimNo) {
+                    showToast('Please fill out Name, Phone, and Claim Number!', 'error');
+                    return null;
+                }
+
+                if (!isClaimNumberValid) {
+                    showToast('Take-out claim number is invalid or taken!', 'error');
+                    return null;
+                }
+                customerDetails = { name, phone, claim_number: parseInt(claimNo) };
+            } 
+            else if (currentOrderMode === 'delivery') {
+                const name = document.getElementById('delivery-name')?.value.trim();
+                const phone = document.getElementById('delivery-phone')?.value.trim();
+                const street = document.getElementById('delivery-street')?.value.trim();
+                const barangay = document.getElementById('delivery-barangay')?.value.trim();
+                const city = document.getElementById('delivery-city')?.value || 'Baler, Aurora';
+
+                if (!name || !phone || !street || !barangay) {
+                    showToast('All delivery address fields are mandatory!', 'error');
+                    return null;
+                }
+                customerDetails = { name, phone, address: `${street}, Brgy. ${barangay}, ${city}` };
+            }
+
+            return customerDetails;
+        }
+
+        async function submitOrder() {
+            const customerDetails = validateOrderFields();
+            if (!customerDetails) return;
+
+            const cartModal = document.getElementById('cart-modal');
+            if (cartModal) cartModal.classList.add('hidden');
+
+            const orderId = 'WHN-' + Math.floor(1000 + Math.random() * 9000);
+            const subtotal = Object.values(shoppingCart).reduce((sum, i) => sum + (i.item.price * i.qty), 0);
+            const deliveryFee = currentOrderMode === 'delivery' ? 40 : 0;
+            const totalPrice = subtotal + deliveryFee;
+
+            const orderRecord = {
+                order_id: orderId,
+                order_mode: currentOrderMode,
+                customer_details: customerDetails,
+                items: Object.values(shoppingCart).map(i => ({ name: i.item.name, qty: i.qty, price: i.item.price })),
+                total_price: totalPrice,
+                created_at: new Date().toISOString(),
+                claim_number: customerDetails.claim_number || null
+            };
+
+            try {
+                if (supabaseClient) {
+                    await supabaseClient.from('wahana_orders').insert([orderRecord]);
+                } else if (currentOrderMode === 'take-out' && customerDetails.claim_number) {
+                    reservedTakeoutClaimNumbers.push(customerDetails.claim_number);
+                }
+            } catch (e) {
+                console.warn('DB Save Notice: fallback active.', e);
+            }
+
+            showWaitingModal(orderRecord);
+        }
+
+        /* WAITING CONFIRMATION SCREEN */
+        function showWaitingModal(orderRecord) {
+            const waitingModal = document.getElementById('waiting-modal');
+            const progressBar = document.getElementById('waiting-progress-bar');
+            const countdownText = document.getElementById('waiting-countdown-text');
+
+            const orderIdEl = document.getElementById('waiting-order-id');
+            const orderModeEl = document.getElementById('waiting-order-mode');
+            if (orderIdEl) orderIdEl.innerText = orderRecord.order_id;
+            if (orderModeEl) orderModeEl.innerText = orderRecord.order_mode;
+
+            if (waitingModal) waitingModal.classList.remove('hidden');
+            if (progressBar) progressBar.style.width = '0%';
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 33;
+                if (progressBar) progressBar.style.width = `${progress}%`;
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        if (waitingModal) waitingModal.classList.add('hidden');
+                        showFinalReceipt(orderRecord);
+                    }, 800);
+                } else if (countdownText) {
+                    countdownText.innerText = `Confirming order with kitchen... (${Math.ceil((100 - progress) / 33)}s)`;
+                }
+            }, 1000);
+        }
+
+        /* FINAL RECEIPT */
+        function showFinalReceipt(order) {
+            const receiptModal = document.getElementById('receipt-modal');
+            const receiptBody = document.getElementById('receipt-details-body');
+
+            let customerInfoHTML = '';
+            if (order.order_mode === 'dine-in') {
+                customerInfoHTML = `
+                    <div class="flex justify-between"><span class="text-brand-muted">Customer:</span><span class="font-bold text-white">${order.customer_details.name}</span></div>
+                    <div class="flex justify-between"><span class="text-brand-muted">Assigned Table:</span><span class="font-bold text-brand-gold">Table ${order.customer_details.table_number}</span></div>
+                `;
+            } else if (order.order_mode === 'take-out') {
+                customerInfoHTML = `
+                    <div class="flex justify-between"><span class="text-brand-muted">Customer:</span><span class="font-bold text-white">${order.customer_details.name}</span></div>
+                    <div class="flex justify-between"><span class="text-brand-muted">Contact:</span><span class="text-white">${order.customer_details.phone}</span></div>
+                    <div class="flex justify-between"><span class="text-brand-muted">Claim Ticket Number:</span><span class="font-black text-brand-gold text-sm bg-brand-surface px-2 py-0.5 rounded">#${order.customer_details.claim_number}</span></div>
+                `;
+            } else if (order.order_mode === 'delivery') {
+                customerInfoHTML = `
+                    <div class="flex justify-between"><span class="text-brand-muted">Recipient:</span><span class="font-bold text-white">${order.customer_details.name}</span></div>
+                    <div class="flex justify-between"><span class="text-brand-muted">Contact:</span><span class="text-white">${order.customer_details.phone}</span></div>
+                    <div class="flex justify-between"><span class="text-brand-muted">Address:</span><span class="text-white text-right font-medium max-w-[200px]">${order.customer_details.address}</span></div>
+                `;
+            }
+
+            let itemsListHTML = order.items.map(i => `
+                <div class="flex justify-between border-b border-brand-surface/40 pb-1.5">
+                    <span>${i.qty}× ${i.name}</span>
+                    <span class="font-mono text-brand-gold">₱${(i.price * i.qty).toFixed(2)}</span>
+                </div>
+            `).join('');
+
+            if (receiptBody) {
+                receiptBody.innerHTML = `
+                    <div class="space-y-1.5 border-b border-brand-surface pb-3">
+                        <div class="flex justify-between"><span class="text-brand-muted">Order ID:</span><span class="font-mono text-brand-gold font-bold">${order.order_id}</span></div>
+                        <div class="flex justify-between"><span class="text-brand-muted">Mode:</span><span class="font-bold uppercase text-white">${order.order_mode}</span></div>
+                        ${customerInfoHTML}
+                    </div>
+
+                    <div class="space-y-2 pt-1">
+                        <div class="font-semibold text-brand-gold">Ordered Items:</div>
+                        ${itemsListHTML}
+                    </div>
+
+                    <div class="pt-2 border-t border-brand-surface space-y-1">
+                        <div class="flex justify-between text-brand-muted"><span>Total Paid/Due:</span><span class="text-base font-bold text-brand-gold font-mono">₱${order.total_price.toFixed(2)}</span></div>
+                        <div class="flex justify-between text-[10px] text-brand-muted"><span>Date/Time:</span><span>${new Date().toLocaleString()}</span></div>
+                    </div>
+                `;
+            }
+
+            if (receiptModal) receiptModal.classList.remove('hidden');
+        }
+
+        function resetAndNewOrder() {
+            const receiptModal = document.getElementById('receipt-modal');
+            if (receiptModal) receiptModal.classList.add('hidden');
+
+            shoppingCart = {};
+            currentOrderMode = null;
+            isClaimNumberValid = false;
+
+            document.querySelectorAll('input').forEach(i => i.value = '');
+
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('border-brand-gold', 'bg-brand-surface/90', 'gold-border-glow');
+                const badge = btn.querySelector('.badge-selected');
+                if (badge) badge.classList.add('hidden');
+            });
+
+            const fieldsContainer = document.getElementById('order-fields-container');
+            if (fieldsContainer) fieldsContainer.classList.add('hidden');
+
+            const warningBox = document.getElementById('claim-number-warning');
+            const successBox = document.getElementById('claim-number-success');
+            if (warningBox) warningBox.classList.add('hidden');
+            if (successBox) successBox.classList.add('hidden');
+
+            const menuSection = document.getElementById('menu-section');
+            if (menuSection) menuSection.classList.add('opacity-50', 'pointer-events-none');
+
+            const statusText = document.getElementById('mode-status-text');
+            if (statusText) statusText.innerText = 'Please choose order mode above first';
+
+            updateCartUI();
+            renderMenu('all');
+            showToast('Ready for new order!', 'info');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* TOAST NOTIFICATIONS */
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-brand-card border-brand-gold text-brand-light';
+            let icon = 'fa-circle-info text-brand-gold';
+
+            if (type === 'success') {
+                bgClass = 'bg-emerald-950 border-emerald-500 text-emerald-100';
+                icon = 'fa-circle-check text-emerald-400';
+            } else if (type === 'error') {
+                bgClass = 'bg-red-950 border-red-500 text-red-100';
+                icon = 'fa-triangle-exclamation text-red-400';
+            } else if (type === 'warning') {
+                bgClass = 'bg-amber-950 border-amber-500 text-amber-100';
+                icon = 'fa-bell text-amber-400';
+            }
+
+            toast.className = `p-3.5 rounded-xl border ${bgClass} shadow-xl text-xs font-medium flex items-center justify-between gap-3 pointer-events-auto transform transition-all duration-300 translate-x-10 opacity-0`;
+            toast.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid ${icon} text-base flex-shrink-0"></i>
+                    <span>${message}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-brand-muted hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-x-10', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-10');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
