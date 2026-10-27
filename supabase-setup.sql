@@ -1,7 +1,3 @@
--- Wahana ordering: run this once in your Supabase SQL editor.
--- Only publishable / anon keys belong in the browser. Never use a service-role key.
--- No official menu or logo is seeded: the business must verify and import those.
-
 create table if not exists public.restaurant_settings (
   id integer primary key default 1 check (id = 1),
   name text not null default 'Wahana Café Baler',
