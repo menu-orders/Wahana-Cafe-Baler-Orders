@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wahana Cafe Baler | Online Menu & Ordering</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,800;1,600&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0a1610',
+                            card: '#12251b',
+                            surface: '#1a3325',
+                            accent: '#d4a359',
+                            accentHover: '#b88942',
+                            light: '#f4ebd9',
+                            muted: '#819488',
+                            danger: '#ef4444',
+                            success: '#22c55e'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0a1610;
+            color: #f4ebd9;
+            font-family: 'Outfit', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a1610; }
+        ::-webkit-scrollbar-thumb { background: #1a3325; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d4a359; }
+
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #fceabb 0%, #d4a359 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-brand-dark text-brand-light min-h-screen flex flex-col justify-between">
+
+    <!-- HEADER -->
+    <header class="bg-brand-card/90 backdrop-blur-md sticky top-0 z-40 border-b border-brand-accent/20 shadow-md">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 rounded-full bg-brand-surface border-2 border-brand-accent flex items-center justify-center p-1 shadow-md overflow-hidden flex-shrink-0">
+                        <div class="w-full h-full rounded-full bg-[#152b1e] flex flex-col items-center justify-center text-center p-0.5 border border-brand-accent/40">
+                            <span class="text-[8px] font-black tracking-widest text-brand-accent uppercase leading-none">WAHANA</span>
+                            <span class="text-[6px] text-white/80 uppercase tracking-tighter">CAFE</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold font-serif tracking-wide gold-gradient-text leading-tight">WAHANA CAFE</h1>
+                        <p class="text-xs text-brand-muted">Baler, Aurora • Beach & River Side</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="openTrackModal()" class="bg-brand-surface hover:bg-brand-surface/80 border border-brand-accent/30 text-brand-accent px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <span>Track Order</span>
+                    </button>
+                    <button onclick="toggleCartDrawer()" class="relative bg-brand-accent hover:bg-brand-accentHover text-brand-dark px-4 py-2 rounded-xl text-xs font-extrabold transition flex items-center gap-2 shadow-md">
+                        <i class="fa-solid fa-basket-shopping text-sm"></i>
+                        <span>Cart</span>
+                        <span id="cart-badge" class="bg-brand-dark text-brand-accent text-[11px] font-mono px-2 py-0.5 rounded-full font-bold">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- STORE STATUS BANNER -->
+    <div id="store-status-banner" class="hidden px-4 py-3 text-center text-xs font-bold border-b transition-all">
+        <i id="store-status-icon" class="fa-solid mr-1.5 text-sm"></i>
+        <span id="store-status-text">Notice: Store Status Update</span>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 flex-grow w-full">
+
+        <!-- CATEGORY NAV -->
+        <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-none" id="category-pills">
+            <button onclick="filterCategory('all', event)" class="cat-pill active bg-brand-accent text-brand-dark px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition">All Items</button>
+            <button onclick="filterCategory('Coffee', event)" class="cat-pill bg-brand-surface text-brand-light hover:bg-brand-surface/80 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition">Coffee & Brews</button>
+            <button onclick="filterCategory('Pizza', event)" class="cat-pill bg-brand-surface text-brand-light hover:bg-brand-surface/80 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition">Sourdough Pizza</button>
+            <button onclick="filterCategory('Meals', event)" class="cat-pill bg-brand-surface text-brand-light hover:bg-brand-surface/80 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition">Mains & Meals</button>
+            <button onclick="filterCategory('Drinks', event)" class="cat-pill bg-brand-surface text-brand-light hover:bg-brand-surface/80 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition">Refreshers & Drinks</button>
+        </div>
+
+        <!-- MENU GRID -->
+        <div id="menu-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div class="col-span-full text-center py-12 text-brand-muted">
+                <i class="fa-solid fa-spinner animate-spin text-2xl mb-2"></i>
+                <p>Loading menu...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- CART DRAWER -->
+    <div id="cart-drawer" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex justify-end">
+        <div class="bg-brand-card w-full max-w-md h-full flex flex-col justify-between p-6 border-l border-brand-surface shadow-2xl overflow-y-auto">
+            <div>
+                <div class="flex items-center justify-between border-b border-brand-surface pb-4">
+                    <h3 class="text-lg font-bold font-serif text-brand-accent">Your Order Basket</h3>
+                    <button onclick="toggleCartDrawer()" class="text-brand-muted hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <div id="cart-items-list" class="divide-y divide-brand-surface/60 my-4 space-y-3">
+                    <!-- Dynamic cart rows -->
+                </div>
+            </div>
+
+            <div class="space-y-4 border-t border-brand-surface pt-4">
+                <div class="space-y-1.5 text-xs text-brand-muted">
+                    <div class="flex justify-between"><span>Subtotal:</span><span id="cart-subtotal" class="font-mono text-white">₱0.00</span></div>
+                    <div class="flex justify-between font-bold text-sm text-brand-accent"><span>Total Amount:</span><span id="cart-total" class="font-mono">₱0.00</span></div>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-brand-muted mb-1">Dining Mode *</label>
+                        <select id="order-mode-select" onchange="handleModeChange()" class="w-full bg-brand-surface border border-brand-surface rounded-xl p-2.5 text-xs text-white focus:border-brand-accent outline-none">
+                            <option value="Dine-In">Dine-In (At Cafe Table)</option>
+                            <option value="Take-Out">Take-Out (Pick Up Counter)</option>
+                            <option value="Delivery">Local Delivery (Baler)</option>
+                        </select>
+                    </div>
+
+                    <div id="dinein-field">
+                        <label class="block text-xs font-bold text-brand-muted mb-1">Table Number *</label>
+                        <input type="number" id="input-table-number" placeholder="e.g. 5" class="w-full bg-brand-surface border border-brand-surface rounded-xl p-2.5 text-xs text-white focus:border-brand-accent outline-none font-mono">
+                    </div>
+
+                    <div id="delivery-fields" class="hidden space-y-2">
+                        <input type="text" id="input-street" placeholder="Street Address / Resort Name *" class="w-full bg-brand-surface border border-brand-surface rounded-xl p-2.5 text-xs text-white focus:border-brand-accent outline-none">
+                        <input type="text" id="input-barangay" placeholder="Barangay *" class="w-full bg-brand-surface border border-brand-surface rounded-xl p-2.5 text-xs text-white focus:border-brand-accent outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-brand-muted mb-1">Customer Full Name *</label>
+                        <input type="text" id="input-customer-name" placeholder="Your Name" class="w-full bg-brand-surface border border-brand-surface rounded-xl p-2.5 text-xs text-white focus:border-brand-accent outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-brand-muted mb-1">Contact Phone Number *</label>
+                        <input type="tel" id="input-contact-number" placeholder="09171234567" class="w-full bg-brand-surface border border-brand-surface rounded-xl p-2.5 text-xs text-white focus:border-brand-accent outline-none font-mono">
+                        <p class="text-[10px] text-brand-muted mt-1">Required for order verification & status SMS updates.</p>
+                    </div>
+
+                    <button id="submit-order-btn" onclick="submitOrder()" class="w-full bg-brand-accent hover:bg-brand-accentHover text-brand-dark font-extrabold py-3 rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Order Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRACK ORDER MODAL -->
+    <div id="track-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card w-full max-w-md rounded-2xl border border-brand-surface p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-brand-surface pb-3">
+                <h3 class="text-base font-bold font-serif text-brand-accent">Track Your Order Status</h3>
+                <button onclick="closeTrackModal()" class="text-brand-muted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="flex gap-2">
+                <input type="text" id="track-input-id" placeholder="Enter Order ID (e.g. WHN-8492)" class="flex-grow bg-brand-surface border border-brand-surface rounded-xl p-2.5 text-xs text-white font-mono focus:border-brand-accent outline-none">
+                <button onclick="performOrderTrack()" class="bg-brand-accent hover:bg-brand-accentHover text-brand-dark px-4 py-2.5 rounded-xl text-xs font-bold transition">Search</button>
+            </div>
+
+            <div id="track-result-container" class="hidden bg-brand-surface/40 p-4 rounded-xl border border-brand-surface space-y-3"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://ovnrgbqbfpebqjparxyq.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_LY5jsImbX5WCF8ZoWwXXPA_xWTRjQqj";
+
+        let supabaseClient = null;
+        if (window.supabase) {
+            try {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            } catch(e) { console.warn("Supabase client fallback", e); }
+        }
+
+        let menuItems = [];
+        let cart = [];
+        let activeCategory = 'all';
+        let storeState = 'ACCEPTING'; // 'ACCEPTING', 'PAUSED', 'CLOSED'
+
+        const defaultMenu = [
+            { item_id: 'C01', name: 'Baler Espresso', category: 'Coffee', price: 110, is_available: true, desc: 'Rich local single-origin espresso shot.' },
+            { item_id: 'C02', name: 'Spanish Latte', category: 'Coffee', price: 150, is_available: true, desc: 'Espresso with condensed milk and creamy foam.' },
+            { item_id: 'P01', name: 'Margherita Sourdough', category: 'Pizza', price: 380, is_available: true, desc: 'Fresh basil, local tomatoes, and mozzarella.' },
+            { item_id: 'P02', name: 'Pepperoni Overload', category: 'Pizza', price: 440, is_available: true, desc: 'Loaded pepperoni on 48hr fermented sourdough base.' },
+            { item_id: 'M01', name: 'Wahana Surf Burger', category: 'Meals', price: 290, is_available: true, desc: 'Juicy beef patty, caramelized onions & secret sauce.' },
+            { item_id: 'D01', name: 'Iced Honey Lemon Tea', category: 'Drinks', price: 120, is_available: true, desc: 'Refreshing house-brewed iced tea.' }
+        ];
+
+        window.onload = function() {
+            checkStoreStatus();
+            fetchMenu();
+            setInterval(checkStoreStatus, 4000);
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const tableParam = urlParams.get('table');
+            if (tableParam) {
+                document.getElementById('input-table-number').value = tableParam;
+            }
+        };
+
+        async function checkStoreStatus() {
+            try {
+                let data = null;
+                if (supabaseClient) {
+                    const res = await supabaseClient.from('wahana_menu').select('*').eq('item_id', 'CONFIG_STORE');
+                    data = res.data;
+                }
+                if (!data) {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/wahana_menu?item_id=eq.CONFIG_STORE`, {
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+                    });
+                    if (response.ok) data = await response.json();
+                }
+
+                if (data && data.length > 0) {
+                    const cfg = data[0];
+                    if (cfg.category) {
+                        storeState = cfg.category; // EXPECTED: 'ACCEPTING', 'PAUSED', or 'CLOSED'
+                    } else {
+                        storeState = cfg.is_available !== false ? 'ACCEPTING' : 'PAUSED';
+                    }
+                }
+            } catch(e) {}
+
+            const banner = document.getElementById('store-status-banner');
+            const icon = document.getElementById('store-status-icon');
+            const text = document.getElementById('store-status-text');
+            const submitBtn = document.getElementById('submit-order-btn');
+
+            if (storeState === 'PAUSED') {
+                banner.className = "bg-amber-500/20 border-amber-500/40 text-amber-400 px-4 py-3 text-center text-xs font-bold border-b";
+                icon.className = "fa-solid fa-pause mr-1.5 text-sm";
+                text.innerText = "Notice: Wahana Cafe is temporarily PAUSED and not taking orders right now.";
+                banner.classList.remove('hidden');
+
+                submitBtn.disabled = true;
+                submitBtn.className = "w-full bg-gray-600 text-gray-300 font-bold py-3 rounded-xl text-xs cursor-not-allowed";
+                submitBtn.innerText = "Orders Currently Paused";
+
+            } else if (storeState === 'CLOSED') {
+                banner.className = "bg-brand-danger/20 border-brand-danger/40 text-brand-danger px-4 py-3 text-center text-xs font-bold border-b";
+                icon.className = "fa-solid fa-store-slash mr-1.5 text-sm";
+                text.innerText = "Notice: Wahana Cafe is currently CLOSED for the day. See you tomorrow!";
+                banner.classList.remove('hidden');
+
+                submitBtn.disabled = true;
+                submitBtn.className = "w-full bg-gray-600 text-gray-300 font-bold py-3 rounded-xl text-xs cursor-not-allowed";
+                submitBtn.innerText = "Store Closed";
+
+            } else {
+                // ACCEPTING
+                banner.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.className = "w-full bg-brand-accent hover:bg-brand-accentHover text-brand-dark font-extrabold py-3 rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-2";
+                submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Submit Order Now`;
+            }
+        }
+
+        async function fetchMenu() {
+            try {
+                let data = null;
+                if (supabaseClient) {
+                    const res = await supabaseClient.from('wahana_menu').select('*');
+                    data = res.data;
+                }
+                if (!data) {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/wahana_menu?select=*`, {
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+                    });
+                    if (response.ok) data = await response.json();
+                }
+
+                if (data && data.length > 0) {
+                    menuItems = data.filter(i => i.item_id !== 'CONFIG_STORE');
+                } else {
+                    menuItems = defaultMenu;
+                }
+            } catch(e) {
+                menuItems = defaultMenu;
+            }
+            renderMenu();
+        }
+
+        function filterCategory(cat, evt) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-pill').forEach(btn => {
+                btn.className = "cat-pill bg-brand-surface text-brand-light hover:bg-brand-surface/80 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition";
+            });
+            if (evt && evt.target) {
+                evt.target.className = "cat-pill active bg-brand-accent text-brand-dark px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition";
+            }
+            renderMenu();
+        }
+
+        function renderMenu() {
+            const grid = document.getElementById('menu-grid');
+            grid.innerHTML = '';
+
+            const filtered = activeCategory === 'all' ? menuItems : menuItems.filter(i => i.category === activeCategory);
+
+            filtered.forEach(item => {
+                const isAvailable = item.is_available !== false;
+                const canAdd = isAvailable && storeState === 'ACCEPTING';
+                const card = document.createElement('div');
+                card.className = "bg-brand-card rounded-2xl border border-brand-surface p-4 flex flex-col justify-between shadow-lg space-y-3";
+
+                card.innerHTML = `
+                    <div class="space-y-1.5">
+                        <div class="flex items-start justify-between">
+                            <h4 class="font-bold text-white text-sm">${escapeHTML(item.name)}</h4>
+                            <span class="font-mono text-brand-accent font-bold text-xs">₱${parseFloat(item.price).toFixed(2)}</span>
+                        </div>
+                        <p class="text-xs text-brand-muted line-clamp-2">${escapeHTML(item.desc || '')}</p>
+                    </div>
+
+                    <div class="pt-2 flex items-center justify-between border-t border-brand-surface/60">
+                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${isAvailable ? 'bg-brand-success/20 text-brand-success' : 'bg-brand-danger/20 text-brand-danger'}">
+                            ${isAvailable ? 'In Stock' : 'Sold Out'}
+                        </span>
+                        <button onclick="addToCart('${item.item_id}')" ${!canAdd ? 'disabled' : ''} class="bg-brand-surface hover:bg-brand-accent hover:text-brand-dark border border-brand-accent/30 text-brand-accent px-3 py-1.5 rounded-xl text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed">
+                            + Add
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function addToCart(itemId) {
+            const item = menuItems.find(i => i.item_id === itemId);
+            if (!item) return;
+
+            const existing = cart.find(c => c.item_id === itemId);
+            if (existing) {
+                existing.qty++;
+            } else {
+                cart.push({ item_id: item.item_id, name: item.name, price: item.price, qty: 1 });
+            }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const list = document.getElementById('cart-items-list');
+            list.innerHTML = '';
+            let total = 0;
+            let count = 0;
+
+            cart.forEach(item => {
+                const itemTotal = item.price * item.qty;
+                total += itemTotal;
+                count += item.qty;
+
+                const row = document.createElement('div');
+                row.className = "flex items-center justify-between py-2 text-xs";
+                row.innerHTML = `
+                    <div class="flex-grow pr-2">
+                        <div class="font-bold text-white">${escapeHTML(item.name)}</div>
+                        <div class="font-mono text-brand-muted">₱${item.price.toFixed(2)} × ${item.qty}</div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="changeQty('${item.item_id}', -1)" class="w-6 h-6 rounded bg-brand-surface border border-brand-surface flex items-center justify-center font-bold text-brand-accent">-</button>
+                        <span class="font-mono font-bold text-white">${item.qty}</span>
+                        <button onclick="changeQty('${item.item_id}', 1)" class="w-6 h-6 rounded bg-brand-surface border border-brand-surface flex items-center justify-center font-bold text-brand-accent">+</button>
+                    </div>
+                `;
+                list.appendChild(row);
+            });
+
+            document.getElementById('cart-badge').innerText = count;
+            document.getElementById('cart-subtotal').innerText = `₱${total.toFixed(2)}`;
+            document.getElementById('cart-total').innerText = `₱${total.toFixed(2)}`;
+        }
+
+        function changeQty(itemId, delta) {
+            const item = cart.find(c => c.item_id === itemId);
+            if (item) {
+                item.qty += delta;
+                if (item.qty <= 0) {
+                    cart = cart.filter(c => c.item_id !== itemId);
+                }
+            }
+            updateCartUI();
+        }
+
+        function toggleCartDrawer() {
+            document.getElementById('cart-drawer').classList.toggle('hidden');
+        }
+
+        function handleModeChange() {
+            const mode = document.getElementById('order-mode-select').value;
+            const dineinField = document.getElementById('dinein-field');
+            const deliveryFields = document.getElementById('delivery-fields');
+
+            dineinField.classList.toggle('hidden', mode !== 'Dine-In');
+            deliveryFields.classList.toggle('hidden', mode !== 'Delivery');
+        }
+
+        async function submitOrder() {
+            if (storeState !== 'ACCEPTING') {
+                alert(`Wahana Cafe is currently ${storeState === 'CLOSED' ? 'closed' : 'paused'}. Cannot accept orders right now.`);
+                return;
+            }
+
+            if (cart.length === 0) {
+                alert("Your cart is empty!");
+                return;
+            }
+
+            const name = document.getElementById('input-customer-name').value.trim();
+            const phone = document.getElementById('input-contact-number').value.trim();
+            const mode = document.getElementById('order-mode-select').value;
+
+            if (!name) { alert("Please enter your name."); return; }
+            
+            const cleanPhone = phone.replace(/[^0-9+]/g, '');
+            if (!cleanPhone || cleanPhone.length < 10) {
+                alert("Please enter a valid Philippine mobile contact number (e.g., 09171234567).");
+                return;
+            }
+
+            let tableNum = null;
+            let street = null;
+            let barangay = null;
+
+            if (mode === 'Dine-In') {
+                tableNum = document.getElementById('input-table-number').value.trim();
+                if (!tableNum) { alert("Please enter your table number."); return; }
+            } else if (mode === 'Delivery') {
+                street = document.getElementById('input-street').value.trim();
+                barangay = document.getElementById('input-barangay').value.trim();
+                if (!street || !barangay) { alert("Please complete your delivery address."); return; }
+            }
+
+            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+
+            const payload = {
+                customer_name: name,
+                contact_number: cleanPhone,
+                order_mode: mode,
+                table_number: tableNum,
+                street: street,
+                barangay: barangay,
+                items: cart,
+                total_price: total,
+                status: 'Preparing'
+            };
+
+            try {
+                let insertedData = null;
+                if (supabaseClient) {
+                    const res = await supabaseClient.from('orders').insert([payload]).select();
+                    if (res.data) insertedData = res.data[0];
+                }
+
+                if (!insertedData) {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        const resArr = await response.json();
+                        insertedData = resArr[0];
+                    }
+                }
+
+                const orderIdStr = insertedData ? `WHN-${String(insertedData.id).substring(0,6).toUpperCase()}` : 'Submitted';
+                alert(`Order Placed Successfully! Your Order ID is: ${orderIdStr}`);
+
+                cart = [];
+                updateCartUI();
+                toggleCartDrawer();
+                openTrackModal();
+                if (insertedData) {
+                    document.getElementById('track-input-id').value = orderIdStr;
+                    performOrderTrack();
+                }
+
+            } catch(e) {
+                alert("Error placing order: " + e.message);
+            }
+        }
+
+        function openTrackModal() { document.getElementById('track-modal').classList.remove('hidden'); }
+        function closeTrackModal() { document.getElementById('track-modal').classList.add('hidden'); }
+
+        async function performOrderTrack() {
+            const input = document.getElementById('track-input-id').value.trim();
+            if (!input) return;
+
+            const resContainer = document.getElementById('track-result-container');
+            resContainer.classList.remove('hidden');
+            resContainer.innerHTML = `<p class="text-xs text-brand-muted"><i class="fa-solid fa-spinner animate-spin"></i> Searching...</p>`;
+
+            try {
+                let data = null;
+                if (supabaseClient) {
+                    const res = await supabaseClient.from('orders').select('*');
+                    data = res.data;
+                }
+                if (!data) {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=*`, {
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+                    });
+                    if (response.ok) data = await response.json();
+                }
+
+                if (data) {
+                    const match = data.find(o => `WHN-${String(o.id).substring(0,6).toUpperCase()}` === input.toUpperCase() || String(o.id) === input);
+                    if (match) {
+                        const canCancel = match.status === 'Preparing' || match.status === 'Pending';
+                        resContainer.innerHTML = `
+                            <div class="space-y-2 text-xs">
+                                <div class="flex justify-between items-center border-b border-brand-surface pb-2">
+                                    <span class="font-bold text-white">${escapeHTML(match.customer_name)}</span>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${match.status === 'Completed' ? 'bg-brand-success/20 text-brand-success' : match.status === 'Cancelled' ? 'bg-brand-danger/20 text-brand-danger' : 'bg-brand-accent/20 text-brand-accent'}">${escapeHTML(match.status)}</span>
+                                </div>
+                                <div class="flex justify-between"><span>Mode:</span><strong class="text-white uppercase">${escapeHTML(match.order_mode)}</strong></div>
+                                <div class="flex justify-between"><span>Total:</span><strong class="text-brand-accent font-mono">₱${parseFloat(match.total_price||0).toFixed(2)}</strong></div>
+                                ${canCancel ? `
+                                    <button onclick="userCancelOrder('${match.id}')" class="w-full mt-2 bg-brand-danger/20 hover:bg-brand-danger border border-brand-danger/40 text-brand-danger hover:text-white py-1.5 rounded-xl font-bold transition">
+                                        <i class="fa-solid fa-xmark mr-1"></i> Cancel Order
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `;
+                        return;
+                    }
+                }
+                resContainer.innerHTML = `<p class="text-xs text-brand-danger font-bold">Order ID not found.</p>`;
+            } catch(e) {
+                resContainer.innerHTML = `<p class="text-xs text-brand-danger">Error tracking order.</p>`;
+            }
+        }
+
+        async function userCancelOrder(id) {
+            if (!confirm("Are you sure you want to cancel this order?")) return;
+
+            try {
+                let ok = false;
+                if (supabaseClient) {
+                    const { error } = await supabaseClient.from('orders').update({ status: 'Cancelled' }).eq('id', id);
+                    if (!error) ok = true;
+                }
+                if (!ok) {
+                    const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`
+                        },
+                        body: JSON.stringify({ status: 'Cancelled' })
+                    });
+                    if (res.ok) ok = true;
+                }
+                alert("Order cancelled successfully.");
+                performOrderTrack();
+            } catch(e) {
+                alert("Failed to cancel order: " + e.message);
+            }
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>
