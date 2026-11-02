@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wahana Cafe Baler • Cabin & Coastal Kitchen</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #050d08;
+      --card-bg: rgba(14, 30, 20, 0.75);
+      --amber-gold: #f59e0b;
+      --emerald-glow: #10b981;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: #f3efe6;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(245, 158, 11, 0.04) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.04) 0%, transparent 45%);
+      background-attachment: fixed;
+    }
+    h1, h2, h3, h4, .font-heading {
+      font-family: 'Cabinet Grotesk', sans-serif;
+    }
+    .glass-nav {
+      background: rgba(5, 13, 8, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card-hover:hover {
+      background: rgba(22, 44, 30, 0.85);
+      border-color: rgba(245, 158, 11, 0.35);
+      transform: translateY(-2px);
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #050d08;
+      box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.35);
+    }
+    .btn-gold:hover {
+      background: linear-gradient(135deg, #fbbf24 0%, #b45309 100%);
+      box-shadow: 0 14px 30px -3px rgba(245, 158, 11, 0.45);
+    }
+    .amber-glow {
+      box-shadow: 0 0 35px -5px rgba(245, 158, 11, 0.2);
+    }
+    ::-webkit-scrollbar { height: 5px; width: 5px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+    ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.4); border-radius: 99px; }
+  </style>
+</head>
+<body class="min-h-screen pb-28 selection:bg-amber-400 selection:text-black">
+
+  <!-- Header Navbar -->
+  <header class="sticky top-0 z-40 glass-nav transition-all duration-300">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-2xl shadow-inner">
+          ☕
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white font-heading">
+              WAHANA <span class="text-amber-400">CAFE</span>
+            </h1>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 uppercase tracking-widest">Baler</span>
+          </div>
+          <p class="text-[11px] text-emerald-400/80 font-medium tracking-wide uppercase">Cabin & Coastal Kitchen • Synchronized Order Desk</p>
+        </div>
+      </div>
+
+      <button onclick="toggleCartModal()" id="cart-nav-btn" class="relative btn-gold px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2.5 transition-all duration-200 transform active:scale-95">
+        <span class="text-base">🛒</span>
+        <span class="hidden sm:inline">Order Cart</span>
+        <span id="cart-badge" class="bg-black text-amber-300 text-xs w-6 h-6 rounded-full font-bold flex items-center justify-center shadow-md border border-amber-500/30 hidden">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Store Live Operating Status -->
+  <section class="max-w-4xl mx-auto px-4 sm:px-6 mt-6">
+    <div id="store-status-banner" class="glass-card p-4 sm:p-5 rounded-3xl flex items-center justify-between shadow-2xl relative overflow-hidden">
+      <div class="flex items-center gap-4">
+        <div class="relative flex items-center justify-center">
+          <span id="store-status-ping" class="absolute w-5 h-5 rounded-full bg-emerald-500/40 animate-ping"></span>
+          <span id="store-status-indicator" class="w-3.5 h-3.5 rounded-full bg-emerald-400 shadow-lg shadow-emerald-400/50"></span>
+        </div>
+        <div>
+          <span class="text-[10px] uppercase font-bold tracking-widest text-emerald-400/70 block">Kitchen Status</span>
+          <span id="store-status-text" class="font-extrabold text-sm sm:text-base text-white">Accepting Orders Now</span>
+        </div>
+      </div>
+      <div class="text-right">
+        <span class="text-[10px] uppercase font-bold tracking-widest text-amber-400/70 block">Location</span>
+        <span class="text-xs sm:text-sm font-bold text-amber-300 font-mono">Baler, Aurora</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live Active Order Progress Tracker -->
+  <section id="active-order-section" class="max-w-4xl mx-auto px-4 sm:px-6 mt-6 hidden">
+    <div class="glass-card border-2 border-amber-500/40 rounded-3xl p-6 shadow-2xl amber-glow space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-bold uppercase tracking-wider">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            Real-Time Order Progress
+          </div>
+          <h2 class="text-2xl font-black font-heading mt-2.5 text-white">Order #<span id="track-order-id" class="text-amber-400">---</span></h2>
+          <p class="text-xs sm:text-sm text-emerald-200/70 mt-1 font-medium" id="track-customer-details">Loading details...</p>
+        </div>
+        <div id="track-status-badge" class="px-4 py-2 rounded-2xl text-xs font-black bg-amber-500 text-black uppercase tracking-wider font-heading shadow-lg self-start sm:self-auto">
+          Pending Review
+        </div>
+      </div>
+
+      <!-- Bounded Progress Stepper (No Overflow Bug) -->
+      <div class="pt-4 pb-2">
+        <div id="tracker-stepper-container" class="relative flex items-center justify-between max-w-md mx-auto px-4">
+          <div class="absolute left-8 right-8 top-1/2 -translate-y-1/2 h-1 bg-white/10 rounded-full z-0"></div>
+          <div id="track-line-progress" class="absolute left-8 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full transition-all duration-700 z-0" style="width: 0%;"></div>
+
+          <div class="relative z-10 flex flex-col items-center">
+            <div id="step-1-circle" class="w-9 h-9 rounded-2xl bg-amber-500 text-black font-black flex items-center justify-center text-xs shadow-lg shadow-amber-500/30 transition-all duration-300">1</div>
+            <span id="step-1-label" class="text-[11px] mt-2.5 text-amber-300 font-bold text-center max-w-[90px] leading-tight">Waiting for Kitchen</span>
+          </div>
+          <div class="relative z-10 flex flex-col items-center">
+            <div id="step-2-circle" class="w-9 h-9 rounded-2xl bg-white/10 text-white/40 font-black flex items-center justify-center text-xs transition-all duration-300">2</div>
+            <span class="text-[11px] mt-2.5 text-white/60 font-bold text-center max-w-[90px] leading-tight">Preparing</span>
+          </div>
+          <div class="relative z-10 flex flex-col items-center">
+            <div id="step-3-circle" class="w-9 h-9 rounded-2xl bg-white/10 text-white/40 font-black flex items-center justify-center text-xs transition-all duration-300">3</div>
+            <span id="step-3-label" class="text-[11px] mt-2.5 text-white/60 font-bold text-center max-w-[90px] leading-tight">Ready</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer Order Cancellation Action -->
+      <div id="cancel-order-action-wrapper" class="pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <span class="text-xs text-white/50 font-medium">Need to make changes? You can cancel while pending kitchen review.</span>
+        <button onclick="cancelActiveOrder()" class="w-full sm:w-auto bg-red-500/10 hover:bg-red-500 text-red-300 hover:text-white border border-red-500/20 text-xs font-black px-5 py-2.5 rounded-xl transition-all duration-200">
+          ✕ Cancel Order
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Category Filter Navbar -->
+  <section class="max-w-4xl mx-auto px-4 sm:px-6 mt-8">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-xs font-black uppercase tracking-widest text-amber-400/80">Menu Categories</h3>
+      <span class="text-[11px] text-white/40 font-medium">Scroll right →</span>
+    </div>
+    <div id="category-filters" class="flex gap-2.5 overflow-x-auto pb-3 scrollbar-none">
+      <button onclick="filterCategory('All')" class="category-btn bg-amber-500 text-black font-black px-5 py-2.5 rounded-2xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 shadow-lg shadow-amber-500/20">All Items</button>
+      <button onclick="filterCategory('Pancakes & Waffles')" class="category-btn glass-card text-white/80 font-bold px-4 py-2.5 rounded-2xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 hover:border-amber-400 hover:text-white">Pancakes & Waffles</button>
+      <button onclick="filterCategory('Rice Meals')" class="category-btn glass-card text-white/80 font-bold px-4 py-2.5 rounded-2xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 hover:border-amber-400 hover:text-white">Rice Meals</button>
+      <button onclick="filterCategory('Pasta')" class="category-btn glass-card text-white/80 font-bold px-4 py-2.5 rounded-2xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 hover:border-amber-400 hover:text-white">Pasta</button>
+      <button onclick="filterCategory('Snacks')" class="category-btn glass-card text-white/80 font-bold px-4 py-2.5 rounded-2xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 hover:border-amber-400 hover:text-white">Snacks</button>
+      <button onclick="filterCategory('Pizza')" class="category-btn glass-card text-white/80 font-bold px-4 py-2.5 rounded-2xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 hover:border-amber-400 hover:text-white">Pizza</button>
+      <button onclick="filterCategory('Espresso Drinks')" class="category-btn glass-card text-white/80 font-bold px-4 py-2.5 rounded-2xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 hover:border-amber-400 hover:text-white">Espresso</button>
+      <button onclick="filterCategory('Non-Coffee')" class="category-btn glass-card text-white/80 font-bold px-4 py-2.5 rounded-2xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 hover:border-amber-400 hover:text-white">Non-Coffee</button>
+      <button onclick="filterCategory('Soda & Refreshers')" class="category-btn glass-card text-white/80 font-bold px-4 py-2.5 rounded-2xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 hover:border-amber-400 hover:text-white">Sodas</button>
+      <button onclick="filterCategory('Local Craft Beer')" class="category-btn glass-card text-white/80 font-bold px-4 py-2.5 rounded-2xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 hover:border-amber-400 hover:text-white">Craft Beer</button>
+      <button onclick="filterCategory('Add-ons')" class="category-btn glass-card text-white/80 font-bold px-4 py-2.5 rounded-2xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 hover:border-amber-400 hover:text-white">Add-ons</button>
+    </div>
+  </section>
+
+  <!-- Interactive Menu Grid -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 mt-6">
+    <div id="menu-container" class="space-y-10"></div>
+  </main>
+
+  <!-- Order Cart Drawer / Modal -->
+  <div id="cart-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+    <div class="glass-card w-full max-w-lg rounded-t-[2.5rem] sm:rounded-3xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl space-y-6 border border-white/10">
+      <div class="flex justify-between items-center border-b border-white/10 pb-4">
+        <div>
+          <h3 class="text-2xl font-black font-heading text-amber-400">Checkout Cart</h3>
+          <p class="text-xs text-white/50 mt-0.5 font-medium">Verify your selection and fulfillment details</p>
+        </div>
+        <button onclick="toggleCartModal()" class="w-10 h-10 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition text-xl">&times;</button>
+      </div>
+
+      <div id="cart-items-list" class="space-y-3 divide-y divide-white/5"></div>
+
+      <form id="checkout-form" onsubmit="handlePlaceOrder(event)" class="space-y-4 pt-2">
+        <div>
+          <label class="block text-xs font-black text-amber-300/80 mb-1.5 uppercase tracking-wider">Fulfillment Option *</label>
+          <select id="order-type-select" onchange="updateFulfillmentFields()" class="w-full bg-[#050d08] border border-white/15 rounded-2xl p-3.5 text-sm text-white font-bold focus:outline-none focus:border-amber-400 transition">
+            <option value="dine-in">Dine-In</option>
+            <option value="take-out">Take-Out</option>
+            <option value="delivery">Delivery</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label class="block text-xs font-black text-amber-300/80 mb-1.5 uppercase tracking-wider">Your Name *</label>
+            <input type="text" id="cust-name" required placeholder="Juan Dela Cruz" class="w-full bg-[#050d08] border border-white/15 rounded-2xl p-3.5 text-sm text-white focus:outline-none focus:border-amber-400 transition">
+          </div>
+          <div>
+            <label class="block text-xs font-black text-amber-300/80 mb-1.5 uppercase tracking-wider">Contact Number *</label>
+            <input type="tel" id="cust-contact" required placeholder="0917XXXXXXX" class="w-full bg-[#050d08] border border-white/15 rounded-2xl p-3.5 text-sm text-white focus:outline-none focus:border-amber-400 transition">
+          </div>
+        </div>
+
+        <div id="field-dine-in">
+          <label class="block text-xs font-black text-amber-300/80 mb-1.5 uppercase tracking-wider">Table Number *</label>
+          <input type="text" id="cust-table" placeholder="e.g. Table 4 or Cabin A" class="w-full bg-[#050d08] border border-white/15 rounded-2xl p-3.5 text-sm text-white focus:outline-none focus:border-amber-400 transition">
+        </div>
+
+        <div id="field-take-out" class="hidden">
+          <label class="block text-xs font-black text-amber-300/80 mb-1.5 uppercase tracking-wider">Claim Code</label>
+          <input type="text" id="cust-claim" readonly class="w-full bg-[#050d08]/50 border border-white/10 rounded-2xl p-3.5 text-sm text-amber-400 font-mono font-bold">
+        </div>
+
+        <div id="field-delivery" class="hidden">
+          <label class="block text-xs font-black text-amber-300/80 mb-1.5 uppercase tracking-wider">Delivery Address *</label>
+          <textarea id="cust-address" rows="2" placeholder="Full street address in Baler..." class="w-full bg-[#050d08] border border-white/15 rounded-2xl p-3.5 text-sm text-white focus:outline-none focus:border-amber-400 transition"></textarea>
+        </div>
+
+        <div class="pt-5 border-t border-white/10 flex items-center justify-between">
+          <div>
+            <span class="text-xs text-white/50 block font-semibold">Total Amount</span>
+            <span id="cart-total" class="text-3xl font-black font-heading text-amber-400">₱0</span>
+          </div>
+          <button type="submit" id="submit-order-btn" class="btn-gold font-black px-7 py-4 rounded-2xl transition-all duration-200 transform active:scale-95 text-xs uppercase tracking-wider">
+            Confirm & Place Order
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://ovnrgbqbfpebqjparxyq.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_LY5jsImbX5WCF8ZoWwXXPA_xWTRjQqj";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let menuItems = [];
+    let currentCategoryFilter = 'All';
+    let cart = [];
+    let activeOrder = null;
+    let storeStatus = 'accepting';
+
+    async function fetchMenuItems() {
+      try {
+        const { data, error } = await supabaseClient.from('menu_items').select('*').order('id');
+        if (!error && data && data.length > 0) {
+          menuItems = data;
+        }
+      } catch (err) {}
+      renderMenu();
+    }
+
+    function filterCategory(cat) {
+      currentCategoryFilter = cat;
+      document.querySelectorAll('.category-btn').forEach(btn => {
+        if (btn.textContent.includes(cat) || (cat === 'All' && btn.textContent.includes('All Items'))) {
+          btn.className = "category-btn bg-amber-500 text-black font-black px-5 py-2.5 rounded-2xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 shadow-lg shadow-amber-500/20";
+        } else {
+          btn.className = "category-btn glass-card text-white/80 font-bold px-4 py-2.5 rounded-2xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 hover:border-amber-400 hover:text-white";
+        }
+      });
+      renderMenu();
+    }
+
+    function renderMenu() {
+      const container = document.getElementById('menu-container');
+      if (!container) return;
+
+      const filtered = currentCategoryFilter === 'All' 
+        ? menuItems 
+        : menuItems.filter(i => i.category === currentCategoryFilter);
+
+      const grouped = {};
+      filtered.forEach(item => {
+        if (!grouped[item.category]) grouped[item.category] = [];
+        grouped[item.category].push(item);
+      });
+
+      if (Object.keys(grouped).length === 0) {
+        container.innerHTML = `<div class="text-center text-white/40 py-16 glass-card rounded-3xl font-medium">No menu items found in this category.</div>`;
+        return;
+      }
+
+      const canOrder = (storeStatus === 'accepting' || storeStatus === 'OPEN');
+
+      container.innerHTML = Object.keys(grouped).map(cat => `
+        <div>
+          <h3 class="text-xl font-black font-heading text-amber-300 mb-4 flex items-center gap-3">
+            <span>${cat}</span>
+            <div class="h-px bg-white/10 flex-1"></div>
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${grouped[cat].map(item => `
+              <div class="glass-card glass-card-hover rounded-3xl p-5 flex justify-between items-center ${(!item.is_available || !canOrder) ? 'opacity-50' : ''} transition-all duration-200 shadow-xl group">
+                <div class="space-y-1.5 pr-3">
+                  <h4 class="font-bold text-base text-white group-hover:text-amber-300 transition">${item.name}</h4>
+                  <p class="text-xs text-white/50 leading-relaxed">${item.description || ''}</p>
+                  <span class="text-amber-400 font-black font-heading text-lg block pt-1">₱${item.price}</span>
+                </div>
+                ${(item.is_available !== false && canOrder) ? `
+                  <button onclick="addToCart(${item.id})" class="bg-white/10 hover:bg-amber-500 hover:text-black font-black px-4 py-3 rounded-2xl transition-all duration-200 text-xs tracking-wide shrink-0 shadow-md">
+                    + Add
+                  </button>
+                ` : `
+                  <span class="bg-red-500/15 text-red-300 border border-red-500/30 font-bold text-[11px] px-3 py-1.5 rounded-xl shrink-0">
+                    ${!canOrder ? 'Offline' : 'Out of Stock'}
+                  </span>
+                `}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addToCart(id) {
+      if (storeStatus !== 'accepting' && storeStatus !== 'OPEN') {
+        alert('Store is currently not accepting orders or closed.');
+        return;
+      }
+      const item = menuItems.find(m => m.id === id);
+      if (!item || item.is_available === false) return;
+      const existing = cart.find(c => c.id === id);
+      if (existing) { existing.qty += 1; }
+      else { cart.push({ ...item, qty: 1 }); }
+      updateCartUI();
+    }
+
+    function updateCartUI() {
+      const badge = document.getElementById('cart-badge');
+      const totalQty = cart.reduce((acc, i) => acc + i.qty, 0);
+      badge.textContent = totalQty;
+      badge.classList.toggle('hidden', totalQty === 0);
+
+      const itemsList = document.getElementById('cart-items-list');
+      if (cart.length === 0) {
+        itemsList.innerHTML = `<div class="text-center text-white/40 py-8 text-sm font-medium">Your cart is empty. Explore our menu to add items!</div>`;
+      } else {
+        itemsList.innerHTML = cart.map(i => `
+          <div class="flex justify-between items-center py-3">
+            <div>
+              <h4 class="font-bold text-sm text-white">${i.name}</h4>
+              <span class="text-xs text-amber-400 font-semibold">₱${i.price} x ${i.qty}</span>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <button onclick="changeQty(${i.id}, -1)" class="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-xl font-extrabold text-sm flex items-center justify-center transition">-</button>
+              <span class="text-sm font-black w-5 text-center">${i.qty}</span>
+              <button onclick="changeQty(${i.id}, 1)" class="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-xl font-extrabold text-sm flex items-center justify-center transition">+</button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+      document.getElementById('cart-total').textContent = `₱${total}`;
+    }
+
+    function changeQty(id, delta) {
+      const idx = cart.findIndex(c => c.id === id);
+      if (idx !== -1) {
+        cart[idx].qty += delta;
+        if (cart[idx].qty <= 0) cart.splice(idx, 1);
+      }
+      updateCartUI();
+    }
+
+    function toggleCartModal() {
+      if (storeStatus !== 'accepting' && storeStatus !== 'OPEN') {
+        alert('Store is currently not accepting orders or closed.');
+        return;
+      }
+      const modal = document.getElementById('cart-modal');
+      modal.classList.toggle('hidden');
+    }
+
+    function updateFulfillmentFields() {
+      const type = document.getElementById('order-type-select').value;
+      document.getElementById('field-dine-in').classList.toggle('hidden', type !== 'dine-in');
+      document.getElementById('field-take-out').classList.toggle('hidden', type !== 'take-out');
+      document.getElementById('field-delivery').classList.toggle('hidden', type !== 'delivery');
+
+      if (type === 'take-out') {
+        document.getElementById('cust-claim').value = 'CLAIM-' + Math.floor(1000 + Math.random() * 9000);
+      }
+    }
+
+    async function handlePlaceOrder(e) {
+      e.preventDefault();
+      if (storeStatus !== 'accepting' && storeStatus !== 'OPEN') {
+        alert('Store is not accepting orders right now.');
+        return;
+      }
+      if (cart.length === 0) return alert('Your cart is empty!');
+
+      const type = document.getElementById('order-type-select').value;
+      const name = document.getElementById('cust-name').value;
+      const contact = document.getElementById('cust-contact').value;
+      const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+
+      let table_number = null, claim_number = null, address = null;
+      if (type === 'dine-in') table_number = document.getElementById('cust-table').value;
+      if (type === 'take-out') claim_number = document.getElementById('cust-claim').value;
+      if (type === 'delivery') address = document.getElementById('cust-address').value;
+
+      const orderData = {
+        ref_id: 'ORD-' + Math.floor(100000 + Math.random() * 900000),
+        customer_name: name,
+        contact_number: contact,
+        order_type: type,
+        table_number,
+        claim_number,
+        address,
+        items: cart,
+        total_amount: total,
+        status: 'Pending'
+      };
+
+      const { data, error } = await supabaseClient
+        .from('orders')
+        .insert([orderData])
+        .select()
+        .single();
+
+      if (error) {
+        alert('Failed to place order: ' + error.message);
+        return;
+      }
+
+      activeOrder = data;
+      cart = [];
+      updateCartUI();
+      toggleCartModal();
+      renderActiveTracker();
+    }
+
+    async function cancelActiveOrder() {
+      if (!activeOrder) return;
+      if (!confirm("Are you sure you want to cancel this order?")) return;
+
+      try {
+        await supabaseClient
+          .from('orders')
+          .update({ status: 'Cancelled', updated_at: new Date() })
+          .eq('id', activeOrder.id);
+        
+        activeOrder.status = 'Cancelled';
+        updateTrackerVisuals('Cancelled');
+        alert("Your order has been cancelled.");
+      } catch (err) {
+        alert("Failed to cancel order.");
+      }
+    }
+
+    function renderActiveTracker() {
+      if (!activeOrder) return;
+      document.getElementById('active-order-section').classList.remove('hidden');
+      document.getElementById('track-order-id').textContent = activeOrder.ref_id || activeOrder.id.slice(0, 8);
+      
+      let detailStr = `${activeOrder.customer_name} • ${activeOrder.contact_number}`;
+      if (activeOrder.order_type === 'dine-in') detailStr += ` • Table ${activeOrder.table_number}`;
+      if (activeOrder.order_type === 'take-out') detailStr += ` • ${activeOrder.claim_number}`;
+      if (activeOrder.order_type === 'delivery') detailStr += ` • ${activeOrder.address}`;
+      document.getElementById('track-customer-details').textContent = detailStr;
+
+      const step3Label = document.getElementById('step-3-label');
+      if (activeOrder.order_type === 'dine-in') step3Label.textContent = "Ready to Serve";
+      if (activeOrder.order_type === 'take-out') step3Label.textContent = "Ready to Claim";
+      if (activeOrder.order_type === 'delivery') step3Label.textContent = "Ready to Deliver";
+
+      updateTrackerVisuals(activeOrder.status);
+    }
+
+    function updateTrackerVisuals(status) {
+      document.getElementById('track-status-badge').textContent = status === 'Pending' ? 'Waiting for Acceptance' : status;
+      const progressLine = document.getElementById('track-line-progress');
+      const c1 = document.getElementById('step-1-circle');
+      const c2 = document.getElementById('step-2-circle');
+      const c3 = document.getElementById('step-3-circle');
+      const step1Label = document.getElementById('step-1-label');
+      const cancelWrapper = document.getElementById('cancel-order-action-wrapper');
+      const stepperContainer = document.getElementById('tracker-stepper-container');
+
+      if (status === 'Cancelled') {
+        document.getElementById('track-status-badge').className = "px-4 py-2 rounded-2xl text-xs font-black bg-red-500 text-white tracking-wider shadow-lg uppercase font-heading";
+        if(cancelWrapper) cancelWrapper.classList.add('hidden');
+        if(stepperContainer) stepperContainer.classList.add('opacity-40');
+        progressLine.style.width = '0%';
+        return;
+      }
+
+      if(cancelWrapper) {
+        if (status === 'Pending') {
+          cancelWrapper.classList.remove('hidden');
+        } else {
+          cancelWrapper.classList.add('hidden');
+        }
+      }
+
+      if(stepperContainer) stepperContainer.classList.remove('opacity-40');
+
+      if (status === 'Pending') {
+        progressLine.style.width = '0%';
+        c1.className = "w-9 h-9 rounded-2xl bg-amber-500 text-black font-black flex items-center justify-center text-xs shadow-lg shadow-amber-500/30 animate-pulse";
+        step1Label.textContent = "Waiting for Kitchen";
+        c2.className = "w-9 h-9 rounded-2xl bg-white/10 text-white/40 font-black flex items-center justify-center text-xs";
+        c3.className = "w-9 h-9 rounded-2xl bg-white/10 text-white/40 font-black flex items-center justify-center text-xs";
+      } else if (status === 'Accepted') {
+        progressLine.style.width = '50%';
+        c1.className = "w-9 h-9 rounded-2xl bg-emerald-500 text-black font-black flex items-center justify-center text-xs shadow-lg shadow-emerald-500/30";
+        step1Label.textContent = "Accepted";
+        c2.className = "w-9 h-9 rounded-2xl bg-amber-500 text-black font-black flex items-center justify-center text-xs shadow-lg shadow-amber-500/30";
+        c3.className = "w-9 h-9 rounded-2xl bg-white/10 text-white/40 font-black flex items-center justify-center text-xs";
+      } else if (status === 'Preparing') {
+        progressLine.style.width = '50%';
+        c1.className = "w-9 h-9 rounded-2xl bg-emerald-500 text-black font-black flex items-center justify-center text-xs";
+        step1Label.textContent = "Accepted";
+        c2.className = "w-9 h-9 rounded-2xl bg-amber-500 text-black font-black flex items-center justify-center text-xs shadow-lg shadow-amber-500/30 animate-pulse";
+        c3.className = "w-9 h-9 rounded-2xl bg-white/10 text-white/40 font-black flex items-center justify-center text-xs";
+      } else if (status.startsWith('Ready') || status === 'Completed') {
+        progressLine.style.width = '100%';
+        c1.className = "w-9 h-9 rounded-2xl bg-emerald-500 text-black font-black flex items-center justify-center text-xs";
+        step1Label.textContent = "Accepted";
+        c2.className = "w-9 h-9 rounded-2xl bg-emerald-500 text-black font-black flex items-center justify-center text-xs";
+        c3.className = "w-9 h-9 rounded-2xl bg-emerald-500 text-black font-black flex items-center justify-center text-xs shadow-lg shadow-emerald-500/30";
+      }
+    }
+
+    async function pollActiveOrder() {
+      if (!activeOrder) return;
+      try {
+        const { data } = await supabaseClient.from('orders').select('*').eq('id', activeOrder.id).single();
+        if (data) {
+          activeOrder = data;
+          updateTrackerVisuals(data.status);
+        }
+      } catch (err) {}
+    }
+
+    async function fetchStoreStatus() {
+      try {
+        const { data } = await supabaseClient.from('store_settings').select('*').eq('id', 1).single();
+        if (data) {
+          storeStatus = data.store_status;
+          updateStoreStatusUI(storeStatus);
+        }
+      } catch (err) {}
+    }
+
+    function updateStoreStatusUI(status) {
+      const ind = document.getElementById('store-status-indicator');
+      const ping = document.getElementById('store-status-ping');
+      const text = document.getElementById('store-status-text');
+      const btn = document.getElementById('submit-order-btn');
+      const cartBtn = document.getElementById('cart-nav-btn');
+
+      if (status === 'accepting' || status === 'OPEN') {
+        ind.className = "w-3.5 h-3.5 rounded-full bg-emerald-400 shadow-lg shadow-emerald-400/50";
+        if(ping) ping.className = "absolute w-5 h-5 rounded-full bg-emerald-500/40 animate-ping";
+        text.textContent = "Accepting Orders Now";
+        if(cartBtn) cartBtn.style.opacity = "1";
+        if(btn) {
+          btn.disabled = false;
+          btn.className = "btn-gold font-black px-7 py-4 rounded-2xl transition-all duration-200 transform active:scale-95 text-xs uppercase tracking-wider";
+        }
+      } else if (status === 'not_accepting') {
+        ind.className = "w-3.5 h-3.5 rounded-full bg-amber-500";
+        if(ping) ping.className = "absolute w-5 h-5 rounded-full bg-amber-500/40";
+        text.textContent = "Not Accepting Orders Yet";
+        if(cartBtn) cartBtn.style.opacity = "0.5";
+        if(btn) {
+          btn.disabled = true;
+          btn.className = "bg-white/10 text-white/40 cursor-not-allowed font-bold px-7 py-4 rounded-2xl";
+        }
+      } else {
+        ind.className = "w-3.5 h-3.5 rounded-full bg-red-500";
+        if(ping) ping.className = "absolute w-5 h-5 rounded-full bg-red-500/40";
+        text.textContent = "Store Closed";
+        if(cartBtn) cartBtn.style.opacity = "0.5";
+        if(btn) {
+          btn.disabled = true;
+          btn.className = "bg-white/10 text-white/40 cursor-not-allowed font-bold px-7 py-4 rounded-2xl";
+        }
+      }
+      renderMenu();
+    }
+
+    renderMenu();
+    fetchMenuItems();
+    fetchStoreStatus();
+    updateFulfillmentFields();
+
+    setInterval(() => {
+      fetchMenuItems();
+      fetchStoreStatus();
+      pollActiveOrder();
+    }, 3000);
+  </script>
+</body>
+</html>
